@@ -1,0 +1,64 @@
+1. we create record. 2 we add visuals/specs/manage/edit the record. we need to align what gets created when we set the record /merch and what gets added as visual(image), specs, etc. after record is created. we add the image and specs to a chosen color tied to that record. summary. => record has many colors . - each color has image, specs. - each color can be deleted/managed/edited (meaning, the record is parent) ie just the name and description of merch. removing record removes everything asociated with it. but removing color removes everything associated with that color in the record. what say you. ? I am starting to think maybe we gently re do the infrastructure or atleast realign it to fit the clear logic again PRODUCT -> MANY COLORS COLORS -> EACH HAS ITS OWN SPECS SPECS ARE -> size, price. if no price atached to a specific color it takes the price entered when product was created. general specs that is added at creating and applies to every color are - description, gender, category, product name and material. everything else like price can be different with colors. so when adding a color and its image representing that color we have the option to add its own price to it else the base price is applied. what say you at this point. ?
+
+
+
+
+
+        <flux:button 
+            icon="shopping-cart" 
+            circular 
+            variant="ghost" 
+            x-on:click="$dispatch('load-quick-add', { id: {{ $product->id }} }); $flux.modal('quick-add-modal').show()" 
+            class="bg-neutral-50 hover:bg-black hover:text-white transition-all"
+            hidden 
+        />
+
+            <div class="flex-shrink-0">
+
+        @livewire('store.quick-add-view') 
+
+
+        <flux:button 
+        icon="shopping-cart" 
+        variant="ghost" 
+        inset
+        @click="$dispatch('open-cart-modal', { id: {{ $product->id }} }); $flux.modal('product-cart').show()"
+    />
+ 
+    </div>
+
+
+
+quick add to cart 
+$this->dispatch('notify', message: 'ADDED TO CART', type: 'success');
+
+$this->state = 'added';
+
+$this->dispatch('close-modal', name: 'quick-add-modal')->delay(500);
+
+
+
+
+
+
+
+
+{{-- GLOBAL MODAL SUITE --}}
+
+<flux:modal name="media-modal"        
+                class="w-full max-w-xl py-12"
+                flyout>
+    @livewire('admin.tools.visuals')
+</flux:modal>
+
+<flux:modal name="specs-modal"        
+                class="w-full max-w-xl py-12"
+                flyout>
+    @livewire('admin.tools.specs')
+</flux:modal>
+
+<flux:modal name="edit-modal"        
+                class="w-full max-w-xl py-12"
+                flyout>
+    @livewire('admin.tools.editor')
+</flux:modal>

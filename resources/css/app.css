@@ -1,0 +1,145 @@
+@import 'tailwindcss';
+@import '../../vendor/livewire/flux/dist/flux.css';
+
+@source '../views';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../vendor/livewire/flux-pro/stubs/**/*.blade.php';
+@source '../../vendor/livewire/flux/stubs/**/*.blade.php';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+
+    --color-zinc-50: #fafafa;
+    --color-zinc-100: #f5f5f5;
+    --color-zinc-200: #e5e5e5;
+    --color-zinc-300: #d4d4d4;
+    --color-zinc-400: #a3a3a3;
+    --color-zinc-500: #737373;
+    --color-zinc-600: #525252;
+    --color-zinc-700: #404040;
+    --color-zinc-800: #262626;
+    --color-zinc-900: #171717;
+    --color-zinc-950: #0a0a0a;
+
+    --color-accent: var(--color-neutral-800);
+    --color-accent-content: var(--color-neutral-800);
+    --color-accent-foreground: var(--color-white);
+}
+
+@layer theme {
+    .dark {
+        --color-accent: var(--color-white);
+        --color-accent-content: var(--color-white);
+        --color-accent-foreground: var(--color-neutral-800);
+    }
+}
+
+@layer base {
+
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+        border-color: var(--color-gray-200, currentColor);
+    }
+}
+
+[data-flux-field]:not(ui-radio, ui-checkbox) {
+    @apply grid gap-2;
+}
+
+[data-flux-label] {
+    @apply  !mb-0 !leading-tight;
+}
+
+input:focus[data-flux-control],
+textarea:focus[data-flux-control],
+select:focus[data-flux-control] {
+    @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
+}
+
+
+
+
+
+
+/* Customizing the "drop area" */
+.filepond--panel-root {
+    background-color: #f4f4f5; /* matches zinc-100 */
+    border: 2px dashed #e4e4e7;
+}
+
+/* Customizing the image preview holder */
+.filepond--image-preview-wrapper {
+    border-radius: 8px;
+}
+
+.filepond--root {
+    margin-bottom: 0 !important;
+}
+
+
+
+
+/* \[:where(&)\]:size-4 {
+    @apply size-4;
+} */
+
+
+
+
+      /* Container silhouette */
+        .gothic-pond-wrapper .filepond--root {
+            font-family: inherit;
+            margin-bottom: 0;
+        }
+
+        /* Remove default rounding & background */
+        .gothic-pond-wrapper .filepond--panel-root {
+            background-color: transparent;
+            border: 2px dashed #000; /* Gothic Border */
+            border-radius: 0 !important; /* Sharp corners */
+        }
+
+        .dark .gothic-pond-wrapper .filepond--panel-root {
+            border-color: #fff;
+        }
+
+        /* Dropzone hover state */
+        .gothic-pond-wrapper .filepond--drop-label {
+            color: #000;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            font-size: 10px;
+            font-weight: 900;
+        }
+
+        .dark .gothic-pond-wrapper .filepond--drop-label {
+            color: #fff;
+        }
+
+        /* Image Preview styling */
+        .gothic-pond-wrapper .filepond--image-preview-wrapper {
+            border-radius: 0 !important;
+        }
+
+        /* Progress Bar - Stark White/Black */
+        .gothic-pond-wrapper .filepond--progress-indicator {
+            background-color: #000;
+        }
+        
+        /* Action buttons (Remove/Retry) - Sharp Squares */
+        .gothic-pond-wrapper .filepond--file-action-button {
+            background-color: rgba(0, 0, 0, 0.8);
+            border-radius: 0 !important;
+            cursor: pointer;
+        }
+
+        /* Remove "Powered by FilePond" for cleaner look */
+        .filepond--credits {
+            display: none;
+        }
+

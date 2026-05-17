@@ -1,0 +1,75 @@
+Schema::create('products', function (Blueprint $table) {
+    $table->id();
+    $table->string('name'); // e.g., "Essential Flag Logo Polo"
+    $table->string('slug')->unique();
+    $table->text('description')->nullable();
+    
+    // Premium Tommy-style attributes
+    $table->string('material')->nullable(); // e.g., "100% Regenerative Cotton"
+    $table->string('fit_type')->nullable(); // e.g., "Slim Fit", "Classic Fit"
+    $table->text('care_instructions')->nullable(); // Important for apparel
+    
+    // Organization
+    $table->foreignId('category_id')->constrained(); 
+    $table->boolean('is_active')->default(true);
+    $table->boolean('is_featured')->default(false); // For "New Arrivals"
+    
+    $table->timestamps();
+});
+
+
+
+Schema::create('product_variants', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('product_id')->constrained()->onDelete('cascade');
+    
+    $table->string('sku')->unique(); // Unique identifier for stock
+    $table->string('color'); // e.g., "Desert Sky", "Optic White"
+    $table->string('size');  // e.g., "XS", "M", "XL"
+    
+    // Pricing
+    $table->decimal('price', 10, 2); // Current selling price
+    $table->decimal('original_price', 10, 2)->nullable(); // For strikethrough "Sale" prices
+    
+    // Inventory Management
+    $table->integer('stock_quantity')->default(0); //
+    $table->integer('low_stock_threshold')->default(5); // Alert for re-stocking
+    
+    $table->timestamps();
+});
+
+
+Schema::create('product_images', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('product_id')->constrained()->onDelete('cascade');
+    $table->string('file_path');
+    $table->integer('order')->default(0); // For gallery sorting
+    $table->boolean('is_thumbnail')->default(false); // Main grid image
+    $table->timestamps();
+});
+
+Schema::create('categories', function (Blueprint $table) {
+    $table->id();
+    $table->string('name');
+    $table->string('slug')->unique();
+    $table->foreignId('parent_id')->nullable()->constrained('categories')->onDelete('cascade');
+    $table->boolean('is_active')->default(true);
+    $table->timestamps();
+});
+
+
+php artisan make:model Product -m
+php artisan make:model ProductVariant -m
+php artisan make:model ProductImage -m
+
+
+
+
+
+
+
+    @if($hero->isNotEmpty())
+        <section class="hidden">
+            {{-- Slider Logic --}}
+        </section>
+    @endif

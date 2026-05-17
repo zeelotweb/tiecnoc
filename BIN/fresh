@@ -1,0 +1,355 @@
+############################################################
+# 🟦 1. MAC (LOCAL MACHINE) — BUILD + SYNC
+############################################################
+
+# [MAC-1] Install frontend deps
+npm install
+
+# [MAC-2] Build assets
+npm run build
+
+# [MAC-3] Sync project to server (DEPLOY STEP)
+rsync -avz --delete \
+--exclude vendor \
+--exclude node_modules \
+--exclude storage/app/public \
+./ root@63.250.47.120:/var/www/zeelot/
+
+
+############################################################
+# 🟨 2. SERVER ROOT — INFRASTRUCTURE SETUP (ONE TIME)
+############################################################
+
+# [SRV-1] SSH INTO SERVER
+ssh root@SERVER_IP
+
+
+# [SRV-7] Create project directory
+mkdir -p /var/www/taongaf
+
+
+
+# [SRV-2] Update system
+apt update && apt upgrade -y
+
+sudo apt update
+sudo apt install supervisor -y
+
+# [SRV-3] Install stack
+apt install nginx php8.3 php8.3-fpm php8.3-cli php8.3-mbstring php8.3-xml php8.3-curl php8.3-zip php8.3-bcmath unzip curl git composer supervisor ffmpeg certbot python3-certbot-nginx -y
+
+# [SRV-4] Enable services
+systemctl enable nginx php8.3-fpm supervisor
+systemctl start nginx php8.3-fpm supervisor
+
+# [SRV-5] Configure nginx globally
+nano /etc/nginx/nginx.conf
+
+# INSIDE http { }
+server_names_hash_bucket_size 64;
+client_max_body_size 200M;
+
+# [SRV-6] Test nginx
+nginx -t
+systemctl reload nginx
+
+
+
+
+# Remove the default config link
+sudo rm /etc/nginx/sites-enabled/default
+
+# Test your zeelot.net config
+sudo nginx -t
+
+# If it says 'successful', reload
+sudo systemctl reload nginx
+
+
+############################################################
+# 🟩 3. SERVER PROJECT FOLDER — LARAVEL APP
+############################################################
+
+# [APP-1] Enter project
+mkdir -p /var/www/taongaf.com
+cd /var/www/taongaf.com
+
+# [APP-2] Install dependencies
+composer install --no-dev --optimize-autoloader
+
+# [APP-3] Create env
+cp .env.example .env
+php artisan key:generate
+
+# [APP-4] Edit env
+nano .env
+
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://yourdomain.com
+FILESYSTEM_DISK=public
+QUEUE_CONNECTION=database
+
+# [APP-5] Permissions
+chown -R www-data:www-data /var/www/taongaf.com
+chmod -R 775 storage bootstrap/cache
+
+# [APP-6] Storage link
+php artisan storage:link
+
+# [APP-7] Clear cache
+php artisan optimize:clear
+php artisan config:cache
+
+
+############################################################
+# 🟨 4. SERVER ROOT — NGINX DOMAIN CONFIG
+############################################################
+
+# [NGX-1] Create site config
+nano /etc/nginx/sites-available/taongaf.com
+
+server {
+    listen 80;
+    server_name taongaf.com www.taongaf.com;
+
+    root /var/www/taongaf.com/public;
+    index index.php index.html;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
+    }
+}
+
+# [NGX-2] Enable site
+ln -s /etc/nginx/sites-available/taongaf.com /etc/nginx/sites-enabled/
+nginx -t
+systemctl reload nginx
+
+# [NGX-3] SSL
+certbot --nginx -d taongaf.com -d www.taongaf.com
+
+
+############################################################
+# 🟩 5. SERVER ROOT — QUEUE WORKER (OPTIONAL)
+############################################################
+
+# [Q-1] Create supervisor config
+nano /etc/supervisor/conf.d/zltweb.conf
+
+[program:taongaf-queue]
+command=php /var/www/taongaf/artisan queue:work --sleep=3 --tries=3 --timeout=90
+autostart=true
+autorestart=true
+user=www-data
+redirect_stderr=true
+stdout_logfile=/var/log/taongaf-queue.log
+
+# [Q-2] Start queue
+supervisorctl reread
+supervisorctl update
+supervisorctl start taongaf-queue
+
+
+
+
+
+
+
+
+SSL SECURITY
+
+# ==========================================
+# STEP 1: INSTALL CERTBOT
+# ==========================================
+# Install Certbot and its Nginx plugin
+sudo apt update
+sudo apt install certbot python3-certbot-nginx -y
+
+# ==========================================
+# STEP 2: GENERATE AND INSTALL CERTIFICATE
+# ==========================================
+# Replace 'yourdomain.com' with your actual domain. 
+# This command validates your ownership and updates Nginx config automatically.
+sudo certbot --nginx -d zeelot.net -d www.zeelot.net
+
+# During the prompt:
+# 1. Enter your email for renewal alerts.
+# 2. Agree to terms.
+# 3. Choose "2: Redirect" to force all traffic to HTTPS.
+
+# ==========================================
+# STEP 3: VERIFY AUTO-RENEWAL
+# ==========================================
+# Let's Encrypt certs last 90 days. Certbot adds a cron job to renew them automatically.
+# Test the renewal process with a dry run:
+sudo certbot renew --dry-run
+
+
+
+
+
+
+########################################################################
+rsync -av --delete \
+--include='/resources/***' \
+--include='/storage/***' \
+--exclude='*' \
+/Users/oluwafemiokitika/tiec/ /Users/oluwafemiokitika/justtest/
+
+
+
+
+rsync -avz --progress /Users/oluwafemiokitika/tiec/ /Users/oluwafemiokitika/justtestus
+
+
+
+rsync -avP --exclude={'app','vendor','storage'} /Users/oluwafemiokitika/tiec/ /Users/oluwafemiokitika/justtest
+
+
+rsync -avP --delete --exclude={'app','vendor','storage'} /Users/oluwafemiokitika/tiec/ /Users/oluwafemiokitika/justtest
+
+
+
+########################################################################
+
+
+
+
+# ==========================================
+# STEP 1: INITIAL SERVER ACCESS & PREP
+# ==========================================
+# Log into your Quasar VPS (find credentials in Namecheap email)
+ssh root@your_vps_ip
+
+# Update system packages
+sudo apt update && sudo apt upgrade -y
+
+# Install LEMP Stack (Nginx, MySQL, PHP 8.x)
+sudo apt install nginx mariadb-server php-fpm php-mysql php-xml php-curl php-mbstring php-zip -y
+
+# ==========================================
+# STEP 2: DOMAIN & DNS CONFIGURATION
+# ==========================================
+# 1. Log into Namecheap Dashboard -> Domain List -> Manage.
+# 2. Go to 'Advanced DNS' tab.
+# 3. Add 'A Record': Host=@, IP=your_vps_ip.
+# 4. Add 'A Record': Host=www, IP=your_vps_ip.
+# 5. Wait for propagation (usually 10-30 minutes).
+
+# ==========================================
+# STEP 3: LARAVEL DEPLOYMENT
+# ==========================================
+# Navigate to web root and clone your repo
+cd /var/www
+git clone https://github.com
+cd yourproject
+
+# Install PHP dependencies
+composer install --no-dev --optimize-autoloader
+
+# Set permissions (Critical for Laravel to work)
+sudo chown -R www-data:www-data storage bootstrap/cache
+sudo chmod -R 775 storage bootstrap/cache
+
+# Setup environment variables
+cp .env.example .env
+nano .env  # Update your DB_DATABASE, DB_USERNAME, and DB_PASSWORD
+php artisan key:generate
+php artisan migrate --force
+
+# ==========================================
+# STEP 4: QUASAR INTEGRATION (Frontend)
+# ==========================================
+# OPTION A: Monolith (Quasar inside Laravel)
+# Run locally first: 'quasar build'
+# Then upload/move 'dist/spa' contents to Laravel's '/public' folder
+
+# OPTION B: Separate Frontend (Recommended for HMR)
+# Ensure Node.js is installed on VPS
+sudo apt install nodejs npm -y
+npm install -g @quasar/cli
+npm install && quasar build
+
+# ==========================================
+# STEP 5: NGINX CONFIGURATION
+# ==========================================
+# Create a new site config
+sudo nano /etc/nginx/sites-available/yourdomain.com
+
+# [PASTE TEMPLATE BELOW INTO FILE]
+# server {
+#     listen 80;
+#     server_name yourdomain.com ://yourdomain.com;
+#     root /var/www/yourproject/public;
+#     index index.php index.html;
+#
+#     location / {
+#         try_files $uri $uri/ /index.php?$query_string;
+#     }
+#
+#     location ~ \.php$ {
+#         include snippets/fastcgi-php.conf;
+#         fastcgi_pass unix:/var/run/php/php8.x-fpm.sock; # Adjust PHP version
+#     }
+# }
+
+# Enable the site and restart Nginx
+sudo ln -s /etc/nginx/sites-available/yourdomain.com /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl restart nginx
+
+
+
+
+
+
+
+                    ###########  AFTER SYNCING RITUAL ###########
+
+
+
+
+
+
+# 1. Change ownership of the entire project to the web user
+sudo chown -R www-data:www-data /var/www/taongaf
+
+# 2. Set the correct permissions for storage and cache folders
+sudo chmod -R 775 /var/www/taongaf/storage
+sudo chmod -R 775 /var/www/taongaf/bootstrap/cache
+
+# 3. Clear Laravel's internal caches to start fresh
+cd /var/www/taongaf
+php artisan config:clear
+php artisan cache:clear
+php artisan view:clear
+
+
+
+
+
+
+
+
+rsync -avzP --exclude='node_modules' --exclude='storage/*.php' --exclude='storage/framework/cache/data/*' ./ root@63.250.47.120:/var/www/taongaf.com
+
+
+sudo rm -rf /var/www/taongaf.com /var/www/taongaf.com /etc/nginx/sites-available/taongaf.com 
+/etc/nginx/sites-available/taongaf /etc/nginx/sites-enabled/taongaf.com /etc/nginx/sites-enabled/taongaf
+
+
+0Xa7lQm283iOsRy7ZV
+
+
+
+sudo chown -R www-data:www-data /var/www/taongaf.com
+sudo chmod -R 775 /var/www/taongaf.com/storage
+sudo chmod -R 775 /var/www/taongaf.com/bootstrap/cache
+php artisan config:clear
+php artisan cache:clear
+php artisan view:clear

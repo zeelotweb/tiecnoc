@@ -1,0 +1,137 @@
+ssh root@63.250.47.120
+
+apt update && apt upgrade -y
+apt install nginx mysql-server php8.3 php8.3-fpm php8.3-cli php8.3-mbstring php8.3-xml php8.3-curl php8.3-zip php8.3-bcmath php8.3-sqlite3 unzip curl git -y
+apt install composer -y
+apt install ffmpeg -y
+apt install supervisor -y
+
+
+
+
+systemctl enable nginx
+systemctl enable php8.3-fpm
+systemctl enable supervisor
+systemctl start nginx
+systemctl start php8.3-fpm
+systemctl start supervisor
+
+
+nano /etc/nginx/nginx.conf
+
+
+
+#######  Add inside http {}:  ########
+server_names_hash_bucket_size 64;
+client_max_body_size 200M;
+##################################
+
+
+
+
+nginx -t
+systemctl reload nginx
+
+
+
+apt install certbot python3-certbot-nginx -y
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+apt update && apt upgrade -y
+
+apt install nginx php8.3 php8.3-fpm php8.3-cli php8.3-mbstring php8.3-xml php8.3-curl php8.3-zip php8.3-sqlite3 unzip git composer -y
+
+systemctl enable nginx php8.3-fpm
+systemctl start nginx php8.3-fpm
+
+mkdir -p /var/www/zeelot
+
+**** rsync -avz ./ root@63.250.47.120:/var/www/zeelot  *****
+
+chown -R www-data:www-data /var/www/zeelot
+
+cd /var/www/zeelot
+
+###  composer install
+
+cp .env.example .env
+
+php artisan key:generate
+
+php artisan storage:link
+
+nano /etc/nginx/sites-available/zeelot
+ln -s /etc/nginx/sites-available/taongaf /etc/nginx/sites-enabled/
+nginx -t && systemctl reload nginx
+
+apt install certbot python3-certbot-nginx -y
+certbot --nginx -d zeelot.net -d www.zeelot.net
+
+
+
+
+
+
+
+
+
+
+apt install php8.4 php8.4-fpm php8.4-cli php8.4-mbstring php8.4-xml php8.4-curl php8.4-zip php8.4-bcmath php8.4-sqlite3 -y
+
+
+systemctl enable nginx php8.4-fpm
+systemctl start nginx php8.4-fpm

@@ -1,0 +1,190 @@
+
+stripe login
+
+stripe listen --forward-to localhost:8000/webhooks/stripe
+
+
+
+pkill -f octane
+
+
+
+
+
+
+
+
+
+
+import * as FilePond from 'filepond';
+import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type';
+import 'filepond/dist/filepond.min.css';
+
+FilePond.registerPlugin(FilePondPluginFileValidateType);
+
+
+x-effect="document.body.classList.toggle('overflow-hidden', $flux.modal('auth-modal').isOpen)"
+
+
+
+
+$this->dispatch('open-modal', 'auth-modal');
+
+
+$flux.modal('auth-modal').hide()
+
+
+
+if (!auth()->check()) {
+    $this->dispatch('open-modal', 'auth-modal');
+    return;
+}
+
+
+
+
+
+<flux:modal name="product-cart-modal" class="md:w-96 " 
+    x-data="{ productId: null }" 
+    @open-cart-modal.window="productId = $event.detail.id; $flux.modal('product-cart-modal').show()"
+>
+    <div class="space-y-6">
+        {{-- The wire:key here is CRITICAL for Livewire 3/4 --}}
+        {{-- The x-bind:key tells Alpine to re-render this block when productId changes --}}
+        <div x-bind:key="productId">
+            @if($productId)
+                <!--livewire:cart-form :product-id="productId" :wire:key="'cart-form-' . productId" /-->
+            @endif
+        </div>
+    </div>
+</flux:modal>
+
+
+
+
+
+
+
+
+{{-- Wrap your existing auth partials in this clean container --}}
+<flux:modal name="auth-modal" :show="false" focusable>
+    <div class="p-8 bg-white dark:bg-[#0a0a0a] border border-black dark:border-white">
+        <div x-data="{ view: 'login' }" class="flex flex-col gap-6">
+            
+            {{-- Simple Tab Switcher --}}
+            <div class="flex gap-8 border-b border-zinc-200 dark:border-zinc-800 pb-4">
+                <button @click="view = 'login'" :class="view === 'login' ? 'opacity-100 underline underline-offset-8' : 'opacity-40'" class="text-[10px] font-bold uppercase tracking-[0.3em]">Login</button>
+                <button @click="view = 'register'" :class="view === 'register' ? 'opacity-100 underline underline-offset-8' : 'opacity-40'" class="text-[10px] font-bold uppercase tracking-[0.3em]">Register</button>
+            </div>
+
+            {{-- Your Existing Files Injected Here --}}
+            <div x-show="view === 'login'">
+                @include('pages.auth.login') {{-- Ensure this file only contains the form fields/logic --}}
+            </div>
+            
+            <div x-show="view === 'register'">
+                @include('pages.auth.register')
+            </div>
+
+            <div x-show="view === 'forgot-password'">
+                @include('pages.auth.forgot-password')
+            </div>
+        </div>
+    </div>
+</flux:modal>
+
+
+
+
+
+<flux:modal name="quick-add-modal" class="md:w-96">
+    <div class="space-y-6">
+        <div>
+            <flux:heading size="lg">
+            
+            </flux:heading>
+             <flux:heading size="xl" class="flex uppercase tracking-tighter font-black italic break-words leading-none items-center mt-4">
+                {{ 'Add to Cartxxxx' }}
+            </flux:heading>
+        </div>
+
+        <livewire:store.quick-add-view />
+
+        <div class="flex gap-2">
+            <flux:spacer />
+            <flux:modal.close>
+                <flux:button variant="ghost">Cancel</flux:button>
+            </flux:modal.close>
+        </div>
+    </div>
+</flux:modal>
+
+
+
+
+Login
+ssh root@63.250.47.120
+zVrI10EXHgYj712i4x
+
+🚀 Install Nginx (your first real step)
+apt update
+apt install nginx -y
+
+
+
+▶️ Start it
+systemctl start nginx
+systemctl enable nginx
+
+🔥 Allow web traffic (important)
+ufw allow 'Nginx Full'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name taongaf.com www.taongaf.com 63.250.47.120;
+
+    root /var/www/taongaf/public;
+
+
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-Content-Type-Options "nosniff";
+
+    index index.php index.html;
+
+    charset utf-8;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+    location = /robots.txt  { access_log off; log_not_found off; }
+
+    error_page 404 /index.php;
+
+    location ~ ^/index\.php(/|$) {
+        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        include fastcgi_params;
+        fastcgi_hide_header X-Powered-By;
+    }
+
+    location ~ /\.(?!well-known).* {
+        deny all;
+    }
+}

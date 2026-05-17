@@ -1,0 +1,59 @@
+0Xa7lQm283iOsRy7ZV
+
+##### CREATE DOMAIN #######
+mkdir -p /var/www/taongaf
+
+
+
+###### SYNC THE PROJECT FILES WIHT THE SERVER DAOMAN FOLDER #####
+rsync -avzP --exclude='node_modules' --exclude='storage/*.php' --exclude='storage/framework/cache/data/*' ./ root@63.250.47.120:/var/www/taongaf.com
+
+
+
+##### GENERATE FRESH KEY FOR .ENV #########
+php artisan key:generate && php artisan optimize:clear
+
+
+
+
+
+###### CREATE THE SERVER FOR THE DOMAIN ########
+nano /etc/nginx/sites-available/taongaf.com
+
+server {
+    listen 80;
+    server_name taongaf.com www.taongaf.com;
+
+    root /var/www/taongaf.com/public;
+    index index.php index.html;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
+    }
+}
+
+
+###### ENABLE NGINX ######
+ln -sf /etc/nginx/sites-available/taongaf.com /etc/nginx/sites-enabled/ && nginx -t
+
+
+
+chown -R www-data:www-data /var/www/taongaf.com && chmod -R 775 /var/www/taongaf.com /var/www/taongaf.com && systemctl reload nginx
+
+
+82d?g7}TiFf5j5QOD}*h
+
+uNF6Q3x9FCuG
+
+Y4yyQZZVuEuB
+
+
+
+
+
+wget -O forge.sh "https://forge.laravel.com/servers/1205907/vps?forge_token=eyJpdiI6IlpoWnE1WjFnQkxyeU5uaHRHL0VlVlE9PSIsInZhbHVlIjoiVWc3bnQ3eC8xMnRzVWVJR3AzVGlnVmV3VVQ5UEdyakt4NVdYWUFrLzRVZ2p3QWgxT1ZMOVY3TFRpSzg1VFhFQnVvaEJnNVpzbVdxN0tjc0IyVFFuTDJqWTZLS3FPOExGaW1paERIaXRkTGFsNmkvZWVSSUlKKzlFYVVPbmkrMnMiLCJtYWMiOiJkZDAxMjUwMTg1MGQzMWRiNTE2MjJkMGRjYTRmM2E3N2YwMTZkMTE4OWFiZDhlOWZkN2UzMzU1ODZkYzE0ZmQ1IiwidGFnIjoiIn0="; bash forge.sh

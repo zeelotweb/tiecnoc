@@ -1,0 +1,188 @@
+## CLEAN PROJECT ##
+mkdir -p /var/www/PROJECT_NAME
+
+
+
+
+
+2. Sync project (FROM YOUR MAC)
+rsync -avz --delete \
+--exclude vendor \
+--exclude node_modules \
+--exclude storage/app/public \
+./ root@SERVER_IP:/var/www/PROJECT_NAME/
+
+
+
+
+cd /var/www/PROJECT_NAME
+composer install --no-dev --optimize-autoloader
+
+
+cp .env.example .env
+php artisan key:generate
+
+
+
+
+
+nano .env
+
+
+
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://yourdomain.com
+FILESYSTEM_DISK=public
+QUEUE_CONNECTION=database
+
+
+chown -R www-data:www-data /var/www/PROJECT_NAME
+chmod -R 775 storage bootstrap/cache
+
+php artisan storage:link
+
+
+touch database/database.sqlite
+chmod 664 database/database.sqlite
+chown www-data:www-data database/database.sqlite
+
+
+
+nano /etc/nginx/sites-available/PROJECT_NAME
+
+server {
+    listen 80;
+    server_name yourdomain.com www.yourdomain.com;
+
+    root /var/www/PROJECT_NAME/public;
+    index index.php index.html;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
+    }
+}
+
+
+ln -s /etc/nginx/sites-available/PROJECT_NAME /etc/nginx/sites-enabled/
+nginx -t
+systemctl reload nginx
+
+certbot --nginx -d yourdomain.com -d www.yourdomain.com
+
+
+php artisan optimize:clear
+php artisan config:cache
+
+
+
+
+nano /etc/supervisor/conf.d/PROJECT_NAME-queue.conf
+
+
+[program:PROJECT_NAME-queue]
+command=php /var/www/PROJECT_NAME/artisan queue:work --sleep=3 --tries=3 --timeout=90
+autostart=true
+autorestart=true
+user=www-data
+redirect_stderr=true
+stdout_logfile=/var/log/PROJECT_NAME-queue.log
+
+
+
+supervisorctl reread
+supervisorctl update
+supervisorctl start PROJECT_NAME-queue
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#SERVER
+ssh-keygen -R 63.250.47.120
+
+rm -rf /var/www/zeelot
+mkdir -p /var/www/zeelot
+
+composer update
+
+cd /var/www/zeelot
+composer install
+
+cp .env.example .env
+php artisan key:generate
+php artisan storage:link
+php artisan optimize:clear
+
+chown -R www-data:www-data /var/www/zeelot
+chmod -R 775 storage bootstrap/cache
+
+php -v
+
+cat /etc/nginx/sites-available/zeelot | grep root
+
+
+
+#MAC PROJECT FOLDER
+
+cd /Users/oluwafemiokitika/project-folder
+
+rsync -avz --exclude vendor --exclude node_modules ./ root@63.250.47.120:/var/www/zeelot/
+
+
+
+
+
+ 0Xa7lQm283iOsRy7ZV
+
+composer update --ignore-platform-req=ext-bcmath
+composer update --with-all-dependencies
+
+
+rm -rf /var/www/zeelot
+mkdir -p /var/www/zeelot
+
+rm -rf /var/www/taongaf
+mkdir -p /var/www/taongaf

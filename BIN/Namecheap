@@ -1,0 +1,56 @@
+
+Login
+ssh root@63.250.47.120
+0Xa7lQm283iOsRy7ZV
+
+
+LOGIN FOR VNC 
+login - root
+password -  0Xa7lQm283iOsRy7ZV
+
+🚀 Install Nginx (your first real step)
+apt update
+apt install nginx -y
+
+
+
+▶️ Start it
+systemctl start nginx
+systemctl enable nginx
+
+🔥 Allow web traffic (important)
+ufw allow 'Nginx Full'
+
+
+
+
+rsync -avz --progress ./ root@63.250.47.120:/User/oluwafemiokitika/tiec
+
+
+
+
+
+
+
+
+to link with project folder
+rsync -avz --progress ./ root@63.250.47.120:/var/www/zeelot
+
+
+
+
+#### CLEAN AFTER RE-INSTALL ######
+
+ssh-keygen -R 63.250.47.120
+ssh-keygen -R zeelot.net
+
+apt update
+
+
+
+
+nano /etc/php/8.3/fpm/php.ini
+upload_max_filesize = 200M
+post_max_size = 200M
+max_execution_time = 300
+max_input_time = 300
