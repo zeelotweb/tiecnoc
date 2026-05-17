@@ -143,6 +143,8 @@ supervisorctl start PROJECT_NAME-queue
 #SERVER
 ssh-keygen -R 63.250.47.120
 
+
+
 rm -rf /var/www/zeelot
 mkdir -p /var/www/zeelot
 
