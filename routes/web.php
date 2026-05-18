@@ -35,8 +35,8 @@ Route::prefix('catalogue')->name('store.')->group(function () {
     Route::get('/female', [PlatformController::class, 'female'])->name('female');
     Route::get('/sale', [PlatformController::class, 'sale'])->name('sale');
     Route::get('/unisex', [PlatformController::class, 'unisex'])->name('unisex');
-//    Route::get('/all', [PlatformController::class, 'all'])->name('all');
-    Route::get('/all', [PlatformController::class, 'all'])->name('catalogue');
+    Route::get('/all', [PlatformController::class, 'all'])->name('all');
+//    Route::get('/all', [PlatformController::class, 'all'])->name('catalogue');
 
     Route::get('/pulse', [PlatformController::class, 'pulse'])->name('pulse');
 });
