@@ -45,6 +45,8 @@ ln -sf /etc/nginx/sites-available/taongaf.com /etc/nginx/sites-enabled/ && nginx
 
 chown -R www-data:www-data /var/www/taongaf.com && chmod -R 775 /var/www/taongaf.com /var/www/taongaf.com && systemctl reload nginx
 
+[3l,_U1Y561,I?u,KRN?
+
 v2gGDsw6KBvr
 
 T2gGDsw6KBvY
@@ -53,4 +55,4 @@ T2gGDsw6KBvY
 
 ssh-keygen -R 135.148.139.129
 
-wget -O forge.sh "https://forge.laravel.com/servers/1205907/vps?forge_token=eyJpdiI6IlpoWnE1WjFnQkxyeU5uaHRHL0VlVlE9PSIsInZhbHVlIjoiVWc3bnQ3eC8xMnRzVWVJR3AzVGlnVmV3VVQ5UEdyakt4NVdYWUFrLzRVZ2p3QWgxT1ZMOVY3TFRpSzg1VFhFQnVvaEJnNVpzbVdxN0tjc0IyVFFuTDJqWTZLS3FPOExGaW1paERIaXRkTGFsNmkvZWVSSUlKKzlFYVVPbmkrMnMiLCJtYWMiOiJkZDAxMjUwMTg1MGQzMWRiNTE2MjJkMGRjYTRmM2E3N2YwMTZkMTE4OWFiZDhlOWZkN2UzMzU1ODZkYzE0ZmQ1IiwidGFnIjoiIn0="; bash forge.sh
+wget -O forge.sh "https://forge.laravel.com/servers/1206216/vps?forge_token=eyJpdiI6IlRyNmg0ZThXM1pSc0EzVlpwbEZzSWc9PSIsInZhbHVlIjoiR0hrOUFOTFE2dDJsVitjaDJiYmtSazdWV01rTXA1amp4NmpSRVUzY3VuMHZwaVdyblJONFJBYmQ5ZWNWU2FnWkFaSGJQVGo2dExTNWo3RlRpU0tNNVBSd0JFSEdxdEgxTEVMcnBreTRDbjR6U1A5bVZHZFhPZXhyVGVLcGJKUjYiLCJtYWMiOiI3M2NmOGM3MWQ5MTgzN2RlYWVlMzhjNTk2Nzk5YTU2MTIxOGNiMzJiNGUyYjQxZGVjOWRkODk1YTk2MWUzYzE1IiwidGFnIjoiIn0="; bash forge.sh
