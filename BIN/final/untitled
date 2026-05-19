@@ -1,0 +1,12 @@
+
+
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC/yBdW/Q5q0IbZu1/YbuSLTp0D72mWsQPok6CEhDhxpM4FXPeuQ98k9MI6avReIx7y3QwEDY8ZWbjfnaJ7iJ0g5RgHjIM8Oz1wP5R3cSoHGuq4Jg0A1vCaQ5mIkGX3jS79pmvy2LD2z4CYZ3rVH9acvNXJ694YdlWEd5ySLLnH3+ZoRIbYQC7OKisQ1XP+ArLjo6e2ThHzQUEC1R/Lybqjp1S+DWuOpDhOvFV12tPU8GlqyDCIZG7+FRHxGjsWsowfHa7Kmlw5r07qOCJZqPjWolVPWfhm7yaqzFm2xQlmbqy2uebNaPTXR0re4eBQQYd/D2iqRjbJ0ZnPYDJ1TfeTeFeo1H9mO7lF2TjI7x3X/GXBySOUacmVSXMoGFJygAXUPMzJ0I7wHI83MvjLoeVplLK1QzpWZAc8WveNsWdRrPh/zUfSgMBWR5vO26buJXzkcKIssJDD2EWQ9vzXljMZhjFIEEDhxOAmqRIqPr6E0VwnVmTUiIn8RoyoqXBwO7oxIVLBJ8irE8hsHJH7tdHSomoTDaY6g/nZ1Cv06RWPlt/KqBhyD5R+uFspA1vK3LvRbmvE2GSFt0z/JzKieAUI97syM8CiD6nKe2LCaolEqxWpLrPZ9hVbqHHIzq0QiyTRCBWrGGshX1RdKd1vswwfWF9H42+Pe/AP8hOcR7MEZQ== worker@forge.laravel.com
+
+
+# Laravel Forge Provisioning Cleanup
+0 0 * * * root bash /root/forge-cleanup.sh 2>&1
+Generating public/private ed25519 key pair.
+Your identification has been saved in /home/forge/.ssh/id_rsa
+Your public key has been saved in /home/forge/.ssh/id_rsa.pub
+The key fingerprint is:
+SHA256:aleziEKBWd4LU5R2v1OXOiSApJED5BK24FM/1F35Rwc root@Tiecnoc
