@@ -13,7 +13,7 @@
 <div class="w-full flex">
 
 
-   @if($user->canAccessAdmin() && in_array($user->role, ['admin', 'super_admin']))
+   @if(in_array($user->role, ['admin', 'super_admin']))
 
         <flux:modal.trigger 
                 name="super-admin-control-modal"
