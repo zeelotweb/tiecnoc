@@ -13,20 +13,7 @@
 <div class="w-full flex">
 
 
-   @if(in_array($user->role, ['admin', 'super_admin']))
-
-        <flux:modal.trigger 
-                name="super-admin-control-modal"
-                icon="shield-check">
-            <flux:button
-                icon="shield-check"
-                class="flex bg-black text-white dark:bg-white dark:text-black mx-1"
-            >
-                Control Panel
-            </flux:button>
-        </flux:modal.trigger>
-
-    @endif
+ 
 
 
 
