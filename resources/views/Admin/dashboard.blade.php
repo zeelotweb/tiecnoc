@@ -14,7 +14,7 @@
 
 
  
-    @if(auth()->user()->isSuperAdmin())
+    @if(auth()->user()->isSuperAdmin() || auth()->user()->isAdmin())
 
         <flux:modal.trigger 
                 name="super-admin-control-modal"
