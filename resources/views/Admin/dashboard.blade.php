@@ -117,7 +117,7 @@
 
 
 @auth
-    @if(auth()->user()->isSuperAdmin())
+     @if(auth()->user()->isSuperAdmin() || auth()->user()->isAdmin())
 
         <flux:modal 
         name="super-admin-control-modal" 
