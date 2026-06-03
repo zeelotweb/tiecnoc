@@ -1,63 +1,143 @@
-{{-- Located inside your <flux:sidebar> component block --}}
-<flux:sidebar.footer class="flex flex-col gap-6 p-4 border-t border-black dark:border-white bg-white dark:bg-black">
-    
-    @auth
-        {{-- SECTION 1: ADMIN MATRIX --}}
-        <flux:sidebar.group :heading="__('ADMIN MATRIX')">
-            <flux:sidebar.item href="{{ route('admin.dashboard') }}" icon="shield-check"> Account </flux:sidebar.item>
-            <flux:sidebar.item icon="bookmark" :href="route('store.favorites')" :current="request()->routeIs('store.favorites')" wire:navigate> Favorite </flux:sidebar.item>
-            @if(auth()->user()->canAccessAdmin())
-                <flux:sidebar.item href="{{ route('admin.dashboard') }}" icon="shield-check"> Admin Portal </flux:sidebar.item>
-            @endif
-        </flux:sidebar.group>
+<footer class="border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black">
 
-        {{-- SECTION 2: USER PROFILE & SETTINGS DROPDOWN --}}
-        <div class="pt-2 border-t border-zinc-100 dark:border-zinc-900">
-            <flux:dropdown position="top" align="start" class="w-full">
-                <flux:profile name="{{ auth()->user()->name }}" avatar="livewire.dev" class="cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-900 p-2 rounded-lg transition" />
-                
-                <flux:menu class="w-48">
-                    <flux:menu.item icon="cog-6-tooth" href="{{ route('admin.dashboard') }}">Settings</flux:menu.item>
-                    <flux:menu.separator />
-                    <flux:menu.item variant="danger" icon="arrow-right-start-on-rectangle">
-                        <form method="POST" action="{{ route('logout') }}" id="sidebar-logout-form" class="w-full h-full m-0 p-0">
-                            @csrf
-                            <button type="submit" class="w-full text-left bg-transparent border-0 p-0 text-inherit font-inherit cursor-pointer">
-                                Logout
-                            </button>
-                        </form>
-                    </flux:menu.item>
-                </flux:menu>
-            </flux:dropdown>
+    <div class="max-w-7xl mx-auto px-6 py-16">
+
+        <div class="grid gap-12 md:grid-cols-4">
+
+            {{-- BRAND --}}
+            <div class="space-y-4">
+
+                <h3 class="text-sm font-bold tracking-[0.3em] uppercase">
+                    TIECNOC
+                </h3>
+
+                <p class="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                    {{-- Connecting communities through commerce,
+                    services, and opportunity. --}}
+                    Elevate your everyday rotation. High-quality essentials designed for versatility, built to last.
+                </p>
+
+            </div>
+
+            {{-- EXPLORE --}}
+            <div>
+
+                <h4 class="text-xs font-bold uppercase tracking-[0.2em] mb-4">
+                    Explore
+                </h4>
+
+                <ul class="space-y-2 text-sm">
+
+                    <li>
+                        <a href="#" class="hover:underline">
+                            Marketplace
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="#" class="hover:underline">
+                            Services
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="#" class="hover:underline">
+                            Contractors
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="#" class="hover:underline">
+                            Partners
+                        </a>
+                    </li>
+
+                </ul>
+
+            </div>
+
+            {{-- COMPANY --}}
+            <div>
+
+                <h4 class="text-xs font-bold uppercase tracking-[0.2em] mb-4">
+                    Company
+                </h4>
+
+                <ul class="space-y-2 text-sm">
+
+                    <li>
+                        <a href="#" class="hover:underline">
+                            About
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="#" class="hover:underline">
+                            Contact
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="#" class="hover:underline">
+                            Careers
+                        </a>
+                    </li>
+
+                </ul>
+
+            </div>
+
+            {{-- NEWSLETTER --}}
+            <div>
+
+                <h4 class="text-xs font-bold uppercase tracking-[0.2em] mb-4">
+                    Stay Connected
+                </h4>
+
+                <form class="flex border border-black dark:border-white">
+
+                    <input
+                        type="email"
+                        placeholder="EMAIL ADDRESS"
+                        class="flex-1 bg-transparent px-3 py-2 text-sm focus:outline-none"
+                    >
+
+                    <button
+                        type="submit"
+                        class="px-4 bg-black text-white dark:bg-white dark:text-black"
+                    >
+                        Join
+                    </button>
+
+                </form>
+
+            </div>
+
         </div>
-    @else
-        {{-- SECTION 1: JOIN THE LIST (GUEST CONVERTOR) --}}
-        <div class="space-y-2 px-2">
-            <span class="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-400 block">Join the list</span>
-            <form action="#" method="POST" class="flex border border-black dark:border-white">
-                @csrf
-                <input type="email" required placeholder="EMAIL" 
-                    class="w-full bg-transparent px-2 py-1 text-[10px] text-black dark:text-white placeholder-zinc-500 focus:outline-none uppercase font-mono" />
-                <button type="submit" 
-                    class="bg-black text-white dark:bg-white dark:text-black px-2 py-1 text-[10px] font-bold uppercase tracking-wider hover:opacity-90 transition">
-                    +
-                </button>
-            </form>
-        </div>
 
-        {{-- SECTION 2: GUEST GATEWAYS --}}
-        <flux:sidebar.group class="pt-2 border-t border-zinc-100 dark:border-zinc-900">
-            <flux:sidebar.item icon="user-plus" :href="route('login')" :current="request()->routeIs('login')" wire:navigate> Login </flux:sidebar.item>
-            <flux:sidebar.item icon="user-plus" wire:navigate> Be A Partner </flux:sidebar.item>
-            <flux:sidebar.item icon="wrench" wire:navigate> Become Contractor </flux:sidebar.item>
-        </flux:sidebar.group>
-    @endauth
-
-    {{-- SECTION 3: COPYRIGHT SIGNATURE --}}
-    <div class="px-2 pt-1">
-        <p class="text-[8px] font-mono tracking-widest text-zinc-400 uppercase">
-            &copy; {{ date('Y') }} ALL RIGHTS RESERVED.
-        </p>
     </div>
 
-</flux:sidebar.footer>
+    {{-- BOTTOM BAR --}}
+    <div class="border-t border-zinc-200 dark:border-zinc-800">
+
+        <div class="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+
+            <p class="text-[11px] uppercase tracking-[0.15em] text-zinc-500">
+                © {{ date('Y') }} Tiecnoc. All Rights Reserved.
+            </p>
+
+            <div class="flex gap-6 text-[11px] uppercase tracking-[0.15em]">
+
+                <a href="#">Privacy</a>
+
+                <a href="#">Terms</a>
+
+                <a href="#">Cookies</a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</footer>
