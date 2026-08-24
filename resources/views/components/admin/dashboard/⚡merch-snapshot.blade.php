@@ -33,7 +33,7 @@ new class extends Component {
     */
     public function with(): array
     {
-        $query = Product::query();
+        $query = Product::with('colors');
 
         if ($this->viewLive) {
             // Products with at least one LIVE color
@@ -71,79 +71,74 @@ new class extends Component {
         </div>
     </div>
 
-    {{-- Matrix Table --}}
-    <div class=" border border-black/15 dark:border-white/15 overflow-hidden">
-    <flux:table>
-        <flux:table.columns class="w-full">
-            <flux:table.column>Product</flux:table.column>
-            <flux:table.column>Price</flux:table.column>
-            <flux:table.column>Status</flux:table.column>
-            <flux:table.column class="text-right">Actions</flux:table.column>
-        </flux:table.columns>
+    {{-- GRID --}}
+    @php $isAdmin = auth()->user()->isSuperAdmin() || auth()->user()->isAdmin(); @endphp
 
-        <flux:table.rows>
-            @forelse($products as $product)
-                @php $isLive = $product->colors->contains(fn ($c) => $c->status === 'live'); @endphp
-                <flux:table.row :key="$product->id" class="group">
-                    <flux:table.cell class="font-medium">{{ $product->name }}</flux:table.cell>
-                    <flux:table.cell class="text-zinc-500">${{ number_format($product->base_price, 2) }}</flux:table.cell>
+    @if($products->count())
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-6">
+            @foreach($products as $product)
+                @php
+                    $isLive = $product->colors->contains(fn ($c) => $c->status === 'live');
+                    $color = $product->colors->firstWhere('status', 'live') ?? $product->colors->first();
+                    $image = $color?->front_image_path;
+                @endphp
 
-                    <flux:table.cell>
+                <div class="group cursor-pointer" x-on:click="
+                        $dispatch('load-editor-tool', { id: {{ $product->id }} });
+                        $dispatch('load-visuals-tool', { id: {{ $product->id }} });
+                        $dispatch('load-specs-tool', { id: {{ $product->id }} });
+                        $dispatch('load-metrics-tool', { id: {{ $product->id }} });
+                        $dispatch('media-gallery-modal', { id: {{ $product->id }} });
+                        $dispatch('load-media-tool', { id: {{ $product->id }} });
+                        $flux.modal('product-edit-modal').show();
+                    ">
+
+                    <div class="aspect-[3/4] bg-zinc-100 dark:bg-zinc-900 border border-black/15 dark:border-white/15 overflow-hidden mb-2">
+                        @if($image)
+                            <img src="{{ asset('storage/' . $image) }}" class="w-full h-full object-cover group-hover:opacity-90 transition-opacity">
+                        @else
+                            <div class="w-full h-full flex items-center justify-center text-[10px] text-zinc-400 uppercase tracking-widest">No Image</div>
+                        @endif
+                    </div>
+
+                    <p class="text-sm font-medium truncate">{{ $product->name }}</p>
+
+                    <div class="flex items-center justify-between mt-1">
+                        <span class="text-sm text-zinc-600 dark:text-zinc-400">${{ number_format($product->base_price, 2) }}</span>
+
+                        <flux:dropdown x-on:click.stop>
+                            <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" />
+                            <flux:menu>
+                                <flux:menu.item icon="eye"
+                                    href="{{ route('merchandise.show', $product->slug ?? $product->id) }}"
+                                    target="_blank">
+                                    View Live
+                                </flux:menu.item>
+
+                                @if($isAdmin)
+                                    <flux:menu.separator />
+                                    <flux:menu.item icon="trash"
+                                        variant="danger"
+                                        wire:click="softDelete({{ $product->id }})"
+                                        wire:confirm="Move this product to trash?">
+                                        Delete
+                                    </flux:menu.item>
+                                @endif
+                            </flux:menu>
+                        </flux:dropdown>
+                    </div>
+
+                    <div class="flex justify-end mt-1">
                         <flux:badge :color="$isLive ? 'emerald' : 'zinc'" size="sm">
                             {{ $isLive ? 'Live' : 'Draft' }}
                         </flux:badge>
-                    </flux:table.cell>
-
-@php
-    $user = auth()->user();
-    $isAdmin = $user->isSuperAdmin() || $user->isAdmin();
-@endphp
-
-<flux:table.cell class="text-right">
-    <flux:dropdown>
-        <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" />
-
-        <flux:menu>
-
-            <flux:menu.item icon="pencil-square"
-                x-on:click="
-                    $dispatch('load-editor-tool', { id: {{ $product->id }} });
-                    $dispatch('load-visuals-tool', { id: {{ $product->id }} });
-                    $dispatch('load-specs-tool', { id: {{ $product->id }} });
-                    $dispatch('load-metrics-tool', { id: {{ $product->id }} });
-                    $dispatch('media-gallery-modal', { id: {{ $product->id }} });
-                    $dispatch('load-media-tool', { id: {{ $product->id }} });
-                    $flux.modal('product-edit-modal').show();
-                ">
-                Edit
-            </flux:menu.item>
-
-            <flux:menu.item icon="eye"
-                href="{{ route('merchandise.show', $product->slug ?? $product->id) }}"
-                target="_blank">
-                View Live
-            </flux:menu.item>
-
-            @if($isAdmin)
-                <flux:menu.separator />
-                <flux:menu.item icon="trash"
-                    variant="danger"
-                    wire:click="softDelete({{ $product->id }})"
-                    wire:confirm="Move this product to trash?">
-                    Delete
-                </flux:menu.item>
-            @endif
-
-        </flux:menu>
-    </flux:dropdown>
-</flux:table.cell>
-                </flux:table.row>
-            @empty
-                <flux:table.row>
-                    <flux:table.cell colspan="4" class="text-center py-10 text-zinc-500"> Nothing in the studio yet </flux:table.cell>
-                </flux:table.row>
-            @endforelse
-        </flux:table.rows>
-    </flux:table>
-    </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    @else
+        <div class="text-center py-10 text-sm text-zinc-500 border border-dashed border-black/15 dark:border-white/15">
+            Nothing in the studio yet.
+        </div>
+    @endif
 </section>
