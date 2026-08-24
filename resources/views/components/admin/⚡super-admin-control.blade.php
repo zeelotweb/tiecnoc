@@ -44,69 +44,43 @@ new class extends Component {
         $this->users = User::with('tools')->latest()->get();
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | TOOL CONTROL (ADMIN + SUPER ADMIN)
-    |--------------------------------------------------------------------------
-    */
-    public function toggleTool($userId, $tool, AccessControlService $service)
-    {
-        $user = User::with('tools')->findOrFail($userId);
-
-        if ($user->tools->contains('tool', $tool)) {
-            $service->revokeTool($userId, $tool);
-        } else {
-            $service->grantTool($userId, $tool);
-        }
-
-        $this->users = User::with('tools')->latest()->get();
-    }
 };
 ?>
 
 
-<div class="space-y-6">
+<div class="space-y-4">
 
-    @foreach($users as $u)
-        <div class="flex border p-4 flex-col">
+    @forelse($users as $u)
+        <div class=" border border-black/15 dark:border-white/15 p-4 space-y-3">
 
-            <div class="flex flex-col">
-                <p class="flex font-bold">{{ $u->name }}</p>
-                <p class="flex text-xs opacity-40">{{ $u->email }}</p>
-                <p class="flex text-[10px] uppercase">{{ $u->role }}</p>
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="font-medium text-sm">{{ $u->name }}</p>
+                    <p class="text-xs text-zinc-500">{{ $u->email }}</p>
+                </div>
+                <flux:badge :color="in_array($u->role, ['admin', 'super_admin']) ? 'emerald' : 'zinc'" size="sm">
+                    {{ str_replace('_', ' ', $u->role) }}
+                </flux:badge>
             </div>
 
-{{-- ROLE CONTROL (SUPER ADMIN ONLY) --}}
-@if(auth()->user()->isSuperAdmin())
-    <div class="flex gap-2 mt-2">
-
-        <button wire:click="setRole({{ $u->id }}, 'admin')">
-            Admin
-        </button>
-
-        <button wire:click="setRole({{ $u->id }}, 'staff')">
-            Staff
-        </button>
-
-        {{-- RESET TO NON-ADMIN ENV STATE --}}
-        <button wire:click="setRole({{ $u->id }}, 'customer')">
-            Remove
-        </button>
-
-    </div>
-@endif
-            {{-- TOOL CONTROL (ADMIN + SUPER ADMIN) --}}
-            @if(auth()->user()->isAdmin())
-                <div class="flex gap-2 mt-3">
-                    @foreach(['media','specs','editor'] as $tool)
-                        <button wire:click="toggleTool({{ $u->id }}, '{{ $tool }}')">
-                            {{ $tool }}
+            {{-- ROLE CONTROL (SUPER ADMIN ONLY) --}}
+            @if(auth()->user()->isSuperAdmin())
+                <div class="flex gap-2">
+                    @foreach(['admin' => 'Admin', 'staff' => 'Staff', 'customer' => 'Remove'] as $role => $label)
+                        <button wire:click="setRole({{ $u->id }}, '{{ $role }}')"
+                            class="px-3 py-1.5 text-xs  border transition-colors
+                            {{ $u->role === $role
+                                ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-zinc-900 dark:border-white'
+                                : 'border-black/15 dark:border-white/15 text-zinc-500 hover:border-black/40 dark:hover:border-white/40' }}">
+                            {{ $label }}
                         </button>
                     @endforeach
                 </div>
             @endif
 
         </div>
-    @endforeach
+    @empty
+        <p class="text-sm text-zinc-500">No users yet.</p>
+    @endforelse
 
 </div>

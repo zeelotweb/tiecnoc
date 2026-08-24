@@ -6,6 +6,7 @@ import FilePondPluginImageResize from 'filepond-plugin-image-resize';
 import FilePondPluginImageTransform from 'filepond-plugin-image-transform';
 import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type';
 import heic2any from "heic2any";
+import './media-uppy.js';
 //FilePond.registerPlugin(FilePondPluginImagePreview);
 
 

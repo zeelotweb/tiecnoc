@@ -69,19 +69,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     
     Route::get('/', [AdminController::class, 'administrator'])->name('admin.dashboard');
+
     Route::get('/merchandise/list', [AdminController::class, 'merchandize'])
         ->name('admin.merchandise.index');
-    Route::get('/merchandise/show/{id}', [AdminController::class, 'merchshow'])
-        ->name('admin.merchandise.show');
 
-    // Nested media routes inside admin prefix
-Route::prefix('media/vault/upload')->group(function () {
-   // Route::post('/chunk', [ChunkUploadController::class, 'chunk']);
-   // Route::post('/complete', [ChunkUploadController::class, 'complete']);
-   // Route::delete('/revert', [ChunkUploadController::class, 'revert']);
-});
-
-
+    Route::get('/orders', [AdminController::class, 'orders'])->name('admin.orders');
+    Route::get('/reports', [AdminController::class, 'reports'])->name('admin.reports');
+    Route::get('/team', [AdminController::class, 'team'])->name('admin.team');
 
     Route::post('/upload/chunk', [ChunkUploadController::class, 'upload']);
     Route::post('/upload/complete', [ChunkUploadController::class, 'complete']);

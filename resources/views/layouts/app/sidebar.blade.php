@@ -40,8 +40,7 @@
         <div class="p-3 w-full space-y-4">
             {{-- ADMIN --}}
             @auth
-                <flux:sidebar.group :heading="__('ADMIN MATRIX')">
-                    <flux:sidebar.item href="{{ route('admin.dashboard') }}" icon="shield-check" > Account </flux:sidebar.item>
+                <flux:sidebar.group :heading="__('ACCOUNT')">
                     <flux:sidebar.item icon="bookmark" :href="route('store.favorites')" :current="request()->routeIs('store.favorites')" wire:navigate> Favorite </flux:sidebar.item>
                 </flux:sidebar.group>
             @else
@@ -52,12 +51,12 @@
                 @if(auth()->user()->canAccessAdmin())
                     <flux:sidebar.item href="{{ route('admin.dashboard') }}" icon="shield-check" > Admin Portal </flux:sidebar.item>
                 @endif
-                
+
                 <flux:dropdown position="top" align="start" class="w-full">
                     <flux:profile name="{{ auth()->user()->name }}" class="cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded p-1 transition" />
-                    
+
                     <flux:menu class="w-48">
-                        <flux:menu.item icon="cog-6-tooth" href="{{ route('admin.dashboard') }}">Settings</flux:menu.item>
+                        <flux:menu.item icon="cog-6-tooth" href="{{ route('profile.edit') }}">Settings</flux:menu.item>
                         <flux:menu.separator />
                         <flux:menu.item variant="danger" icon="arrow-right-start-on-rectangle">
                             <form method="POST" action="{{ route('logout') }}" class="w-full m-0 p-0">

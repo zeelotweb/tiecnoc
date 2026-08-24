@@ -1,183 +1,105 @@
-<x-layouts::app :title="__('AminDashboard')">
-<div class="p-8">
-    <flux:header class="flex-col w-full">
-        <flux:heading size="xl" class="flex w-full">Tiecnoc Admin Control</flux:heading>
-        <flux:subheading size="xl" class="flex w-full">Merchandize Creation Studio</flux:subheading>
-    <flux:subheading size="xl" class="flex w-full font-black uppercase">
-        {{ auth()->user()->role }}
-    </flux:subheading>
-    </flux:header>
+<?php
+use App\Models\{Product, ProductColor, ProductVariant};
 
+$lowStockThreshold = 5;
+$totalProducts = Product::count();
+$liveColors = ProductColor::where('status', 'live')->count();
+$lowStockCount = ProductVariant::where('stock_quantity', '<=', $lowStockThreshold)->where('stock_quantity', '>', 0)->count();
+$outOfStockCount = ProductVariant::where('stock_quantity', '<=', 0)->count();
+$draftCount = Product::whereDoesntHave('colors', fn ($q) => $q->where('status', 'live'))->count();
 
-
-<div class="w-full flex">
-
-
- 
-    @if(auth()->user()->isSuperAdmin() || auth()->user()->isAdmin())
-
-        <flux:modal.trigger 
-                name="super-admin-control-modal"
-                icon="shield-check">
-            <flux:button
-                icon="shield-check"
-                class="flex bg-black text-white dark:bg-white dark:text-black mx-1"
-            >
-                Control Panel
+$attentionVariants = ProductVariant::with('color.product')
+    ->where('stock_quantity', '<=', $lowStockThreshold)
+    ->orderBy('stock_quantity')
+    ->take(5)
+    ->get();
+?>
+<x-layouts::admin>
+    <x-slot:pageEyebrow>{{ __('Tiecnoc Studio') }}</x-slot:pageEyebrow>
+    <x-slot:pageTitle>{{ __('Overview') }}</x-slot:pageTitle>
+    <x-slot:pageActions>
+        @if(auth()->user()->isAdmin())
+            <flux:button x-on:click="$flux.modal('add-product-modal').show()" icon="plus" variant="primary">
+                Add Product
             </flux:button>
-        </flux:modal.trigger>
+        @endif
+    </x-slot:pageActions>
 
-    @endif
-
-
-
-
-
-@php $user = auth()->user(); @endphp
-
-@if($user->canAccessAdmin() && in_array($user->role, ['admin', 'super_admin']))
-    <flux:modal.trigger name="delegate-work-modal">
-        <flux:button
-            icon="briefcase"
-            class="flex bg-black text-white dark:bg-white dark:text-black mx-1"
-        >
-            Delegate Work
-        </flux:button>
-    </flux:modal.trigger>
-@endif
-
-</div>
-
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
-        
-        {{-- Tool 1: Add Merchandise --}}
-@php $user = auth()->user(); @endphp
-
-@if($user->isAdmin())
-    
-    {{-- Tool 1: Add Merchandise --}}
-    <flux:modal.trigger name="add-merch">
-        <flux:card class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors">
-            <flux:icon.plus class="mb-4" />
-            <flux:heading>Add Merchandise</flux:heading>
-            <flux:text>Launch the product creation engine.</flux:text>
-        </flux:card>
-    </flux:modal.trigger>
-
-    {{-- Tool 3: Invoice Control --}}
-    <flux:modal.trigger name="view-invoice">
-        <flux:card class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors">
-            <flux:icon.currency-dollar class="mb-4" />
-            <flux:heading>Invoice</flux:heading>
-            <flux:text>Quick look at sales made.</flux:text>
-        </flux:card>
-    </flux:modal.trigger>
-
-@endif
-
-
-
-
-        {{-- Tool 2: Inventory Control (Placeholder) --}}
-        <flux:modal.trigger name="metrix-global-modal">
-             <flux:card class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors">
-                <flux:icon.archive-box class="mb-4" />
-                <flux:heading>Stock Levels</flux:heading>
-                <flux:text>Quick restock and SKU management.</flux:text>
-            </flux:card>
-        </flux:modal.trigger>
+    {{-- COMPACT STAT LINE --}}
+    <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-zinc-500">
+        <span><span class="font-medium text-zinc-900 dark:text-white">{{ $totalProducts }}</span> products</span>
+        <span class="text-zinc-300 dark:text-zinc-700">·</span>
+        <span><span class="font-medium text-zinc-900 dark:text-white">{{ $liveColors }}</span> live colorways</span>
+        <span class="text-zinc-300 dark:text-zinc-700">·</span>
+        <span class="{{ $lowStockCount > 0 ? 'text-amber-600 dark:text-amber-400' : '' }}"><span class="font-medium {{ $lowStockCount > 0 ? '' : 'text-zinc-900 dark:text-white' }}">{{ $lowStockCount }}</span> low stock</span>
+        <span class="text-zinc-300 dark:text-zinc-700">·</span>
+        <span class="{{ $outOfStockCount > 0 ? 'text-[#E31837]' : '' }}"><span class="font-medium {{ $outOfStockCount > 0 ? '' : 'text-zinc-900 dark:text-white' }}">{{ $outOfStockCount }}</span> out of stock</span>
     </div>
 
-<div class="w-full mt-3 p-2">
-	@livewire('admin.dashboard.merch-snapshot')
-</div>
-    {{-- The Modal Containers --}}
-    <flux:modal name="add-merch"       
-    			class="w-full max-w-xl py-12"
-        		flyout>
-        @livewire('admin.merchandise.create')
-    </flux:modal>
+    {{-- MAIN LAYOUT --}}
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-    <flux:modal name="manage-inventory"       
-    			class="w-full max-w-xl py-12"
-        		flyout>
-        {{-- You can drop the variants-manager Volt component here --}}
-        @livewire('admin.merchandise.inventory')
-    </flux:modal>
+        {{-- RECENT PRODUCTS (main content) --}}
+        <div class="lg:col-span-2 space-y-3">
+            <div class="flex items-center justify-between">
+                <p class="text-sm font-medium">On the Line</p>
+                <a href="{{ route('admin.merchandise.index') }}" wire:navigate class="text-xs font-medium text-[#E31837] hover:underline">View All</a>
+            </div>
+            @livewire('admin.dashboard.merch-snapshot')
+        </div>
 
-    <flux:modal name="view-invoice"       
-                class="w-full max-w-xl py-12"
-                flyout>
-        {{-- You can drop the variants-manager Volt component here --}}
-        @livewire('admin.dashboard.invoice')
-    </flux:modal>
+        {{-- RAIL --}}
+        <div class="space-y-8">
 
+            {{-- NEEDS ATTENTION --}}
+            <div class="space-y-3">
+                <p class="text-sm font-medium">Needs Attention</p>
 
+                <div class="space-y-1">
+                    @forelse($attentionVariants as $variant)
+                        <div class="flex items-center justify-between py-1.5 text-sm border-b border-zinc-100 dark:border-zinc-900 last:border-0">
+                            <span class="text-zinc-600 dark:text-zinc-400 truncate pr-2">
+                                {{ $variant->product?->name }} · {{ $variant->color_name }} / {{ $variant->size }}
+                            </span>
+                            <span class="shrink-0 font-medium {{ $variant->stock_quantity <= 0 ? 'text-[#E31837]' : 'text-amber-600 dark:text-amber-400' }}">
+                                {{ $variant->stock_quantity <= 0 ? 'Out' : $variant->stock_quantity }}
+                            </span>
+                        </div>
+                    @empty
+                        <p class="text-sm text-zinc-500">Nothing needs attention.</p>
+                    @endforelse
 
-
-
-@auth
-     @if(auth()->user()->isSuperAdmin() || auth()->user()->isAdmin())
-
-        <flux:modal 
-        name="super-admin-control-modal" 
-        class="w-full max-w-xl py-12 px-2"
-        flyout>
-
-            <div class="flex items-center justify-center bg-white/95 dark:bg-black/95 backdrop-blur-md">
-
-                <div class="w-full max-w-4xl p-8 border border-black dark:border-white bg-white dark:bg-[#0a0a0a]">
-
-                    {{-- HEADER --}}
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xs uppercase tracking-[0.4em] font-black">
-                            Super Admin Control
-                        </h2>
-
-                    </div>
-
-                    {{-- CONTENT --}}
-                    <div class="max-h-[70vh] overflow-y-auto">
-                        <livewire:admin.super-admin-control />
-                    </div>
-
+                    @if($draftCount > 0)
+                        <div class="flex items-center justify-between py-1.5 text-sm">
+                            <span class="text-zinc-600 dark:text-zinc-400">Draft products</span>
+                            <span class="font-medium text-zinc-900 dark:text-white">{{ $draftCount }}</span>
+                        </div>
+                    @endif
                 </div>
             </div>
 
-        </flux:modal>
-
-    @endif
-@endauth
-
-
-@auth
-@if($user->canAccessAdmin() && in_array($user->role, ['admin', 'super_admin']))
-        <flux:modal name="delegate-work-modal" 
-                    class="w-full max-w-xl py-12 px-2"
-                    flyout>
-
-            <div class="flex items-center justify-center bg-white/95 dark:bg-black/95 backdrop-blur-md">
-
-                <div class="w-full max-w-5xl p-8 border border-black dark:border-white bg-white dark:bg-[#0a0a0a]">
-
-                    {{-- HEADER --}}
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xs uppercase tracking-[0.4em] font-black">
-                            Delegate Duties
-                        </h2>
-
-                    </div>
-
-                    {{-- CONTENT --}}
-                    <div class="max-h-[75vh] overflow-y-auto">
-                        <livewire:admin.delegate-work />
-                    </div>
-
-                </div>
+            {{-- LINKS --}}
+            <div class="space-y-1">
+                <a href="{{ route('admin.orders') }}" wire:navigate class="flex items-center gap-2 py-1.5 text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
+                    <flux:icon.receipt-percent variant="micro" class="shrink-0" />
+                    Orders
+                </a>
+                <a href="{{ route('admin.reports') }}" wire:navigate class="flex items-center gap-2 py-1.5 text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
+                    <flux:icon.chart-bar variant="micro" class="shrink-0" />
+                    Reports
+                </a>
+                @if(auth()->user()->isAdmin())
+                    <a href="{{ route('admin.team') }}" wire:navigate class="flex items-center gap-2 py-1.5 text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
+                        <flux:icon.user-group variant="micro" class="shrink-0" />
+                        Team
+                    </a>
+                @endif
             </div>
 
-        </flux:modal>
-    @endif
-@endauth
-</div>
-</x-layouts::app>
+        </div>
+
+    </div>
+
+    @include('partials.admin.product-create-modal')
+    @include('partials.admin.product-tools-modal')
+</x-layouts::admin>

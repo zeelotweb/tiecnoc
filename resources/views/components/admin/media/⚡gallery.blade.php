@@ -10,6 +10,14 @@ new class extends Component {
     public ?int $product_id = null;
     public ?Product $product = null;
 
+    // Direct-embed entry point (product edit page tab).
+    public function mount($productId = null)
+    {
+        if ($productId) {
+            $this->loadMediaTool($productId);
+        }
+    }
+
     /*
     |--------------------------------------------------------------------------
     | LOAD FROM MODAL
@@ -61,21 +69,12 @@ new class extends Component {
 ?>
 
 
-<div class="p-6 space-y-6">
+<div class="space-y-4">
 
-    {{-- HEADER --}}
-    <div class="border-b pb-4">
-        <flux:heading size="lg" class="uppercase font-black italic">
-            {{ $product?->name ?? 'MEDIA_GALLERY' }}
-        </flux:heading>
-
-        <p class="text-[10px] uppercase tracking-[0.3em] opacity-40">
-            Product ID: {{ $product_id ?? 'NULL' }}
-        </p>
-    </div>
+    <flux:label>Media Library</flux:label>
 
     {{-- GRID --}}
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
 
         @forelse($gallery as $media)
 
@@ -86,50 +85,42 @@ new class extends Component {
                 $ext  = strtolower(pathinfo($path ?? '', PATHINFO_EXTENSION));
             @endphp
 
-            <div class="border p-2 relative group flex flex-col gap-2">
+            <div class=" border border-black/15 dark:border-white/15 overflow-hidden relative group">
 
                 {{-- DELETE --}}
-                <button 
+                <button
                     wire:click="delete({{ $media->id }})"
-                    class="absolute top-1 right-1 text-xs opacity-0 group-hover:opacity-100 z-10">
+                    class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/60 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center justify-center">
                     ✕
                 </button>
 
                 {{-- IMAGE --}}
                 @if($url && ($type && str_starts_with($type, 'image') || in_array($ext, ['jpg','jpeg','png','webp','gif'])))
-                    <img src="{{ $url }}" class="w-full h-40 object-cover" loading="lazy" />
+                    <img src="{{ $url }}" class="w-full h-32 object-cover" loading="lazy" />
 
                 {{-- VIDEO --}}
                 @elseif($url && ($type && str_starts_with($type, 'video') || in_array($ext, ['mp4','mov','webm'])))
-                    <video controls class="w-full h-40 object-cover">
+                    <video controls class="w-full h-32 object-cover">
                         <source src="{{ $url }}" type="{{ $type ?: 'video/mp4' }}">
                     </video>
 
                 {{-- PDF --}}
                 @elseif($url && ($type === 'application/pdf' || $ext === 'pdf'))
-                    <iframe src="{{ $url }}" class="w-full h-40"></iframe>
+                    <iframe src="{{ $url }}" class="w-full h-32"></iframe>
 
                 {{-- FALLBACK --}}
                 @else
-                    <div class="flex items-center justify-center h-40 text-[10px] uppercase opacity-50">
-                        Unsupported / Missing
+                    <div class="flex items-center justify-center h-32 text-xs text-zinc-500">
+                        Unsupported file
                     </div>
                 @endif
-
-                {{-- META DEBUG --}}
-                <div class="text-[8px] opacity-40 break-all leading-tight">
-                    <div>ID: {{ $media->id }}</div>
-                    <div>TYPE: {{ $type ?? 'NULL' }}</div>
-                    <div>EXT: {{ $ext ?: 'NULL' }}</div>
-                    <div>PATH: {{ $path ?? 'NULL' }}</div>
-                </div>
 
             </div>
 
         @empty
 
-            <div class="col-span-full text-center py-10 text-xs uppercase opacity-40 italic">
-                No Media Found
+            <div class="col-span-full text-center py-10 text-sm text-zinc-500">
+                No media yet.
             </div>
 
         @endforelse

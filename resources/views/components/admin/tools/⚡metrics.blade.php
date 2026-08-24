@@ -17,6 +17,14 @@ new class extends Component {
     |--------------------------------------------------------------------------
     */
     protected $listeners = ['load-metrics-tool' => 'loadProduct'];
+
+    // Direct-embed entry point (product edit page tab).
+    public function mount($productId = null)
+    {
+        if ($productId) {
+            $this->loadProduct($productId);
+        }
+    }
     /*
     |--------------------------------------------------------------------------
     | LOAD PRODUCT (FROM JS EVENT)
@@ -77,64 +85,59 @@ public function selectColor($colorId)
 };
 ?>
 
-<div class="p-6 space-y-6">
+<div class="space-y-6">
 
     {{-- COLOR SELECTOR --}}
-    <div class="flex gap-3 flex-wrap">
-
-        <button 
+    <div class="flex gap-2 flex-wrap items-center">
+        <button
             wire:click="$set('selectedColorId', null)"
-            class="px-3 py-2 border text-xs font-black uppercase 
-            {{ !$selectedColorId ? 'bg-black text-white' : '' }}">
-            Global
+            class="px-3 py-1.5  border text-sm transition-colors
+            {{ !$selectedColorId ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-zinc-900 dark:border-white' : 'border-black/15 dark:border-white/15 hover:border-black/40 dark:hover:border-white/40' }}">
+            All Colorways
         </button>
 
         @foreach($colors as $color)
-            <button 
+            <button
                 wire:click="selectColor({{ $color->id }})"
-                class="w-10 h-10 border-2 transition-transform
-                {{ $selectedColorId === $color->id ? 'border-red-500 scale-110' : 'border-black/30' }}"
+                title="{{ $color->color_name }}"
+                class="w-8 h-8 rounded-full border-2 transition-transform
+                {{ $selectedColorId === $color->id ? 'border-[#E31837] scale-110' : 'border-black/15 dark:border-white/15' }}"
                 style="background-color: {{ $color->hex_code }}">
             </button>
         @endforeach
-
     </div>
 
     {{-- METRICS GRID --}}
-    <div class="grid grid-cols-2 gap-6">
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
 
-        <div>
-            <p class="text-xs uppercase opacity-50">Stock Count</p>
-            <p class="text-xl font-black">{{ $data['stock_count'] }}</p>
+        <div class=" border border-black/15 dark:border-white/15 p-4">
+            <p class="text-xs text-zinc-500 mb-1">Stock</p>
+            <p class="text-xl font-semibold text-zinc-900 dark:text-white">{{ $data['stock_count'] }}</p>
         </div>
 
-        <div>
-            <p class="text-xs uppercase opacity-50">Stock Value</p>
-            <p class="text-xl font-black">
-                ${{ number_format($data['stock_value'], 2) }}
-            </p>
+        <div class=" border border-black/15 dark:border-white/15 p-4">
+            <p class="text-xs text-zinc-500 mb-1">Stock Value</p>
+            <p class="text-xl font-semibold text-zinc-900 dark:text-white">${{ number_format($data['stock_value'], 2) }}</p>
         </div>
 
-        <div>
-            <p class="text-xs uppercase opacity-50">Sold Count</p>
-            <p class="text-xl font-black">{{ $data['sold_count'] }}</p>
+        <div class=" border border-black/15 dark:border-white/15 p-4">
+            <p class="text-xs text-zinc-500 mb-1">Sold</p>
+            <p class="text-xl font-semibold text-zinc-900 dark:text-white">{{ $data['sold_count'] }}</p>
         </div>
 
-        <div>
-            <p class="text-xs uppercase opacity-50">Sold Value</p>
-            <p class="text-xl font-black">
-                ${{ number_format($data['sold_value'], 2) }}
-            </p>
+        <div class=" border border-black/15 dark:border-white/15 p-4">
+            <p class="text-xs text-zinc-500 mb-1">Sold Value</p>
+            <p class="text-xl font-semibold text-zinc-900 dark:text-white">${{ number_format($data['sold_value'], 2) }}</p>
         </div>
 
-        <div>
-            <p class="text-xs uppercase opacity-50">Favorites</p>
-            <p class="text-xl font-black">{{ $data['favorites'] }}</p>
+        <div class=" border border-black/15 dark:border-white/15 p-4">
+            <p class="text-xs text-zinc-500 mb-1">Favorites</p>
+            <p class="text-xl font-semibold text-zinc-900 dark:text-white">{{ $data['favorites'] }}</p>
         </div>
 
-        <div>
-            <p class="text-xs uppercase opacity-50">Views</p>
-            <p class="text-xl font-black">{{ $data['views'] }}</p>
+        <div class=" border border-black/15 dark:border-white/15 p-4">
+            <p class="text-xs text-zinc-500 mb-1">Views</p>
+            <p class="text-xl font-semibold text-zinc-900 dark:text-white">{{ $data['views'] }}</p>
         </div>
 
     </div>

@@ -13,7 +13,7 @@ new class extends Component {
     // FALSE = show products with NO live colors
     public bool $viewLive = true;
 
-    protected $listeners = ['matrix-updated' => '$refresh'];
+    protected $listeners = ['matrix-updated' => '$refresh', 'product-created' => '$refresh'];
 
     /*
     |--------------------------------------------------------------------------
@@ -67,190 +67,99 @@ new class extends Component {
     }
 };
 ?>
-<div class="p-6 space-y-10">
+<div class="space-y-6">
     {{-- HEADER --}}
-    <flux:header class="flex-col w-full justify-start items-start">
-        <flux:heading size="xl" class="uppercase italic font-black tracking-tighter">
-            Full Catalog Matrix
-        </flux:heading>
-        <flux:subheading class="uppercase text-[10px] tracking-[0.4em]">
-            Complete Registry Archive
-        </flux:subheading>
-
-        {{-- 🔥 GLOBAL TOGGLE --}}
-    <div class="flex items-center gap-3 mt-6 justify-end w-full">
-        <flux:label class="text-[10px] uppercase font-bold tracking-widest {{ !$viewLive ? 'opacity-100' : 'opacity-30' }}"> 
-            Drafts 
-        </flux:label>
-    
-        <flux:switch 
-            wire:model.live="viewLive" 
-            variant="inline"
-            class="{{ $viewLive ? '[--switch-color:theme(colors.emerald.400)] opacity-100' : 'opacity-40' }}"
-        />
-        
-        <flux:label class="text-[10px] uppercase font-bold tracking-widest {{ $viewLive ? 'text-emerald-500 font-bold opacity-100' : 'opacity-30' }}"> 
-            Live 
-        </flux:label>
-    </div>
-        
-        <p class="text-[10px] uppercase tracking-[0.4em] italic mt-2 text-right w-full {{ $viewLive ? 'text-emerald-500 font-bold' : 'opacity-50' }}">
-            Viewing: {{ $viewLive ? 'Live Storefront' : 'Staging (Drafts)' }}
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <p class="text-sm text-zinc-500">
+            {{ $products->count() }} {{ $products->count() === 1 ? 'product' : 'products' }} · {{ $viewLive ? 'on the floor' : 'in the studio' }}
         </p>
-    </flux:header>
+
+        <div class="flex items-center gap-3">
+            <flux:label class="text-sm {{ !$viewLive ? 'text-zinc-900 dark:text-white font-medium' : 'text-zinc-400' }}">Studio</flux:label>
+            <flux:switch
+                wire:model.live="viewLive"
+                variant="inline"
+                class="{{ $viewLive ? '[--switch-color:theme(colors.emerald.500)]' : '' }}"
+            />
+            <flux:label class="text-sm {{ $viewLive ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-zinc-400' }}">Floor</flux:label>
+        </div>
+    </div>
 
     {{-- TABLE --}}
+    <div class=" border border-black/15 dark:border-white/15 overflow-hidden">
     <flux:table>
         <flux:table.columns>
-            <flux:table.column class="uppercase text-[9px] tracking-widest font-black">Identity</flux:table.column>
-            <flux:table.column class="uppercase text-[9px] tracking-widest font-black">Category</flux:table.column>
-            <flux:table.column class="uppercase text-[9px] tracking-widest font-black">Price</flux:table.column>
-            <flux:table.column class="hidden uppercase text-[9px] tracking-[0.4em] font-black">Status</flux:table.column>
-            <flux:table.column class="hidden uppercase text-[9px] tracking-widest font-black text-right">Tools</flux:table.column>
+            <flux:table.column>Product</flux:table.column>
+            <flux:table.column>Category</flux:table.column>
+            <flux:table.column>Price</flux:table.column>
+            <flux:table.column>Status</flux:table.column>
+            <flux:table.column class="text-right">Actions</flux:table.column>
         </flux:table.columns>
 
         <flux:table.rows>
-            @foreach($products as $product)
+            @forelse($products as $product)
+                @php $isLive = $product->colors->contains(fn ($c) => $c->status === 'live'); @endphp
                 <flux:table.row :key="$product->id">
                     {{-- NAME --}}
-                    <flux:table.cell class="font-bold uppercase italic text-sm">
+                    <flux:table.cell class="font-medium">
                         {{ $product->name }}
                     </flux:table.cell>
 
                     {{-- CATEGORY --}}
-                    <flux:table.cell class="text-[10px] uppercase opacity-60">
+                    <flux:table.cell class="text-zinc-500">
                         {{ $product->category->name ?? '—' }}
                     </flux:table.cell>
 
                     {{-- PRICE --}}
-                    <flux:table.cell class="font-mono text-xs">
+                    <flux:table.cell>
                         ${{ number_format($product->base_price, 2) }}
                     </flux:table.cell>
 
-                    {{-- 🔥 STATUS TOGGLE --}}
+                    {{-- STATUS --}}
                     <flux:table.cell>
-<div class="hidden flex items-center gap-3 mt-6 justify-end w-full">
-    <flux:label class="text-[10px] uppercase font-bold tracking-widest {{ !$viewLive ? 'opacity-100' : 'opacity-30' }}"> 
-        Drafts 
-    </flux:label>
-    
-    <flux:switch 
-        wire:model.live="viewLive" 
-        variant="inline"
-        class="{{ $viewLive ? '[--switch-color:theme(colors.emerald.400)] opacity-100' : 'opacity-40' }}"
-    />
-    
-    <flux:label class="text-[10px] uppercase font-bold tracking-widest {{ $viewLive ? 'text-emerald-500 font-bold opacity-100' : 'opacity-30' }}"> 
-        Live 
-    </flux:label>
-</div>
+                        <flux:badge :color="$isLive ? 'emerald' : 'zinc'" size="sm">
+                            {{ $isLive ? 'Live' : 'Draft' }}
+                        </flux:badge>
                     </flux:table.cell>
 
                     {{-- TOOLS --}}
 @php
     $user = auth()->user();
-
     $isAdmin = $user->isSuperAdmin() || $user->isAdmin();
-    $isStaff = $user->isStaff();
-
-    $tools = $user->tools?->pluck('tool')->toArray() ?? [];
-
-    $hasAnyTool = $isAdmin || count($tools) > 0;
-
-    // helper
-    $can = fn ($tool) => $isAdmin || in_array($tool, $tools);
 @endphp
 
 <flux:table.cell class="text-right">
     <flux:dropdown>
+        <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" />
 
-        {{-- TRIGGER --}}
-        <flux:button 
-            variant="ghost" 
-            size="sm" 
-            icon="ellipsis-horizontal"
-            class="hover:bg-black hover:text-white transition-all rounded-none
-                   {{ !$hasAnyTool ? 'opacity-30 cursor-not-allowed pointer-events-none' : '' }}"
-        />
+        <flux:menu>
 
-        <flux:menu class="min-w-[220px] rounded-none border-black border-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:border-white">
-
-            {{-- ADD VISUALS --}}
-            @if($can('media'))
-                <flux:menu.item icon="photo"
-                    class="uppercase text-[10px] font-black tracking-widest"
-                    x-on:click="$dispatch('load-visuals-tool', { id: {{ $product->id }} }); $flux.modal('media-modal').show();">
-                    Add Visuals
-                </flux:menu.item>
-            @endif
-
-            {{-- MANAGE SPECS --}}
-            @if($can('specs'))
-                <flux:menu.item icon="swatch"
-                    class="uppercase text-[10px] font-black tracking-widest"
-                    x-on:click="$dispatch('load-specs-tool', { id: {{ $product->id }} }); $flux.modal('specs-modal').show();">
-                    Manage Specs
-                </flux:menu.item>
-            @endif
-
-            {{-- EDIT --}}
-            @if($can('editor'))
-                <flux:menu.item icon="pencil-square"
-                    class="uppercase text-[10px] font-black tracking-widest"
-                    x-on:click="$dispatch('load-editor-tool', { id: {{ $product->id }} }); $flux.modal('edit-modal').show();">
-                    Edit Info
-                </flux:menu.item>
-            @endif
-
-            @if($isAdmin || $can('metrics') || $can('gallery'))
-                <flux:menu.separator class="bg-black/10 dark:bg-white/10" />
-            @endif
-
-            {{-- METRICS --}}
-            @if($can('metrics'))
-                <flux:menu.item icon="chart-bar"
-                    class="uppercase text-[10px] font-black tracking-widest"
-                    x-on:click="$dispatch('load-metrics-tool', { id: {{ $product->id }} }); $flux.modal('metrics-modal').show();">
-                    Metrics
-                </flux:menu.item>
-            @endif
-
-            {{-- ADD MEDIA --}}
-            @if($can('gallery'))
-                <flux:menu.item icon="photo"
-                    class="uppercase text-[10px] font-black tracking-widest"
-                    x-on:click="$dispatch('media-gallery-modal', { id: {{ $product->id }} }); setTimeout(() => { window.initProductGalleryPond(); }, 100); $flux.modal('media-gallery-modal').show();">
-                    Add Media
-                </flux:menu.item>
-            @endif
-
-            {{-- ALWAYS ALLOWED (READ ONLY) --}}
-            <flux:menu.item icon="photo"
-                class="uppercase text-[10px] font-black tracking-widest"
-                x-on:click="$dispatch('load-media-tool', { id: {{ $product->id }} }); $flux.modal('load-media-tool').show();">
-                View Media
+            <flux:menu.item icon="pencil-square"
+                x-on:click="
+                    $dispatch('load-editor-tool', { id: {{ $product->id }} });
+                    $dispatch('load-visuals-tool', { id: {{ $product->id }} });
+                    $dispatch('load-specs-tool', { id: {{ $product->id }} });
+                    $dispatch('load-metrics-tool', { id: {{ $product->id }} });
+                    $dispatch('media-gallery-modal', { id: {{ $product->id }} });
+                    $dispatch('load-media-tool', { id: {{ $product->id }} });
+                    $flux.modal('product-edit-modal').show();
+                ">
+                Edit
             </flux:menu.item>
-
-            <flux:menu.separator class="bg-black/10 dark:bg-white/10" />
 
             <flux:menu.item icon="eye"
-                class="group uppercase text-[10px] font-black tracking-[0.2em] py-3"
-                href="{{ route('admin.merchandise.show', $product->id) }}">
-                View Page
-                <flux:spacer />
-                <span class="opacity-0 group-hover:opacity-100 transition-opacity italic text-[8px]">VIEW</span>
+                href="{{ route('merchandise.show', $product->slug ?? $product->id) }}"
+                target="_blank">
+                View Live
             </flux:menu.item>
 
-            {{-- DELETE (ADMIN ONLY) --}}
             @if($isAdmin)
+                <flux:menu.separator />
                 <flux:menu.item icon="trash"
                     variant="danger"
-                    class="group uppercase text-[10px] font-black tracking-[0.2em] py-3"
                     wire:click="softDelete({{ $product->id }})"
-                    wire:confirm="MOVE TO TRASH / ARCHIVE?">
-                    Delete Merch
-                    <flux:spacer />
-                    <span class="opacity-0 group-hover:opacity-100 transition-opacity italic text-[8px]">DEL</span>
+                    wire:confirm="Move this product to trash?">
+                    Delete
                 </flux:menu.item>
             @endif
 
@@ -258,15 +167,22 @@ new class extends Component {
     </flux:dropdown>
 </flux:table.cell>
                 </flux:table.row>
-            @endforeach
+            @empty
+                <flux:table.row>
+                    <flux:table.cell colspan="5" class="text-center py-12 text-zinc-500">
+                        Nothing in the studio yet.
+                    </flux:table.cell>
+                </flux:table.row>
+            @endforelse
         </flux:table.rows>
     </flux:table>
+    </div>
 
     {{-- LOAD MORE --}}
     @if($products->hasMorePages())
-        <div class="flex justify-center pt-10">
-            <flux:button wire:click="loadMore" variant="ghost" class="uppercase text-[10px] tracking-[0.5em] font-black italic" >
-                Load More Matrix Data ↓
+        <div class="flex justify-center pt-4">
+            <flux:button wire:click="loadMore" variant="ghost">
+                Load More
             </flux:button>
         </div>
     @endif

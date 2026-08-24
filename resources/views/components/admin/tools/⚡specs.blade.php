@@ -34,9 +34,17 @@ new class extends Component {
     | INIT
     |--------------------------------------------------------------------------
     */
+    // Direct-embed entry point (product edit page tab).
+    public function mount($productId = null)
+    {
+        if ($productId) {
+            $this->load($productId);
+        }
+    }
+
     #[On('load-specs-tool')]
     public function load($id)
-    {   
+    {
         $this->product_id = $id;
 
         $this->reset([
@@ -121,6 +129,27 @@ public function selectActiveColor($colorId, ProductContextService $service)
 
     /*
     |--------------------------------------------------------------------------
+    | DELETE COLOR
+    |--------------------------------------------------------------------------
+    */
+    public function deleteColor($id)
+    {
+        $color = \App\Models\ProductColor::where('id', $id)
+            ->where('product_id', $this->product_id)
+            ->first();
+
+        if (! $color) return;
+
+        if ($this->active_color_id === $color->id) {
+            $this->reset(['active_color_id', 'active_color', 'active_hex', 'size', 'price', 'stock']);
+        }
+
+        $color->delete();
+        $this->dispatch('notify', message: 'COLOR REMOVED');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | COLORS (FOR BLADES $this->colors)
     |--------------------------------------------------------------------------
     */
@@ -149,91 +178,62 @@ public function selectActiveColor($colorId, ProductContextService $service)
 };
 ?>
 
-<div class="w-full overflow-hidden p-6 space-y-12 bg-white dark:bg-black text-black dark:text-white border border-black/10">
+<div class="space-y-8">
 
-    {{-- HEADER --}}
-    <header class="flex flex-col border-b-2 border-black dark:border-white pb-8 gap-6">
-
-        <h1 class="text-3xl font-black italic uppercase tracking-tighter leading-none">
-            SPEC MATRIX BUILDER
-        </h1>
-
-        <div class="flex flex-col gap-2">
-            <p class="text-[10px] uppercase tracking-[0.4em] opacity-40 italic">
-                {{ $active_color ? "CONTEXT: $active_color" : 'AWAITING_SELECTION' }}
-            </p>
-
+    {{-- COLORS (TOP SELECTOR - ALWAYS VISIBLE) --}}
+    <div class="flex flex-col gap-3">
+        <div class="flex items-center gap-3">
+            <flux:label>Colorway</flux:label>
             @if($active_hex)
-                <div class="w-4 h-4 border-2 border-black dark:border-white"
+                <div class="w-4 h-4 rounded border border-zinc-300 dark:border-zinc-700"
                      style="background-color: {{ $active_hex }}"></div>
             @endif
         </div>
 
-    </header>
-
-    {{-- COLORS (TOP SELECTOR - ALWAYS VISIBLE) --}}
-    <div class="flex flex-col gap-4">
-
-        <label class="uppercase text-[11px] font-black tracking-[0.2em]">
-            Available Colors
-        </label>
-
-        <select wire:change="selectActiveColor($event.target.value)"
-                class="border p-3 uppercase font-black">
-
-            <option value="">Select Color</option>
-
+        <flux:select wire:change="selectActiveColor($event.target.value)">
+            <flux:select.option value="">Select a colorway</flux:select.option>
             @foreach($this->colors as $c)
-                <option value="{{ $c->id }}">
-                    {{ $c->color_name }}
-                </option>
+                <flux:select.option value="{{ $c->id }}">{{ $c->color_name }}</flux:select.option>
             @endforeach
-
-        </select>
-
+        </flux:select>
     </div>
 
     {{-- FORM --}}
-    <div class="{{ !$active_color_id ? 'opacity-30 pointer-events-none' : '' }} flex flex-col gap-4">
+    <div class="{{ !$active_color_id ? 'opacity-40 pointer-events-none' : '' }} grid grid-cols-3 gap-4 items-end">
+        <flux:input wire:model="size" label="Size" placeholder="M" />
+        <flux:input wire:model="price" label="Price" placeholder="0.00" icon="currency-dollar" />
+        <flux:input wire:model="stock" type="number" label="Stock" placeholder="0" />
 
-        <input wire:model="size" placeholder="Size" class="border p-2 uppercase font-black">
-        <input wire:model="price" placeholder="Price" class="border p-2 font-black">
-        <input wire:model="stock" type="number" placeholder="Stock" class="border p-2 font-black">
-
-        <button wire:click="saveSpec"
-                class="bg-black text-white uppercase text-[10px] font-black p-3">
-            Save Specs
-        </button>
-
+        <flux:button wire:click="saveSpec" variant="primary" class="col-span-3">
+            Save Size
+        </flux:button>
     </div>
 
-    {{-- CURRENT VARIANT --}}
-    <div class="flex flex-col gap-2">
+    {{-- CURRENT VARIANTS --}}
+    @if($this->variants->count())
+        <div class=" border border-black/15 dark:border-white/15 divide-y divide-black/15 dark:divide-white/15">
+            @foreach($this->variants as $v)
+                <div class="flex items-center justify-between px-4 py-2.5 text-sm">
+                    <span class="font-medium">{{ $v->size }}</span>
+                    <span class="text-zinc-500">${{ $v->price ?? 'base' }} · {{ $v->stock_quantity }} in stock</span>
+                </div>
+            @endforeach
+        </div>
+    @endif
 
-        @foreach($this->variants as $v)
-            <div class="text-[10px] uppercase font-black border p-2">
-                {{ $v->size }} | ${{ $v->price ?? 'BASE' }} | {{ $v->stock_quantity }}
-            </div>
-        @endforeach
-
-    </div>
-
-    {{-- DELETE COLORS --}}
-    <div class="border-t pt-6 flex flex-col gap-2">
-
-        @foreach($this->colors as $c)
-            <div class="flex justify-between text-[10px] uppercase">
-
-                <span>{{ $c->color_name }}</span>
-
-                <button wire:click="deleteColor({{ $c->id }})"
-                        class="text-red-500">
-                    Delete
-                </button>
-
-            </div>
-        @endforeach
-
-    </div>
+    {{-- COLORWAYS --}}
+    @if($this->colors->count())
+        <div class="border-t border-black/15 dark:border-white/15 pt-6 space-y-2">
+            <flux:label>All Colorways</flux:label>
+            @foreach($this->colors as $c)
+                <div class="flex items-center justify-between text-sm py-1">
+                    <span>{{ $c->color_name }}</span>
+                    <flux:button wire:click="deleteColor({{ $c->id }})" wire:confirm="Delete this colorway and its sizes?" variant="ghost" size="sm">
+                        Delete
+                    </flux:button>
+                </div>
+            @endforeach
+        </div>
+    @endif
 
 </div>

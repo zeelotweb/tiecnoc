@@ -143,3 +143,19 @@ select:focus[data-flux-control] {
             display: none;
         }
 
+/* ==========================================================================
+   ADMIN — sharp-corner retail identity (black/white/red, no soft rounding)
+   Scoped to [data-admin-shell] so it never bleeds into the storefront, which
+   keeps Flux's default rounded corners.
+   ========================================================================== */
+[data-admin-shell] [data-flux-button],
+[data-admin-shell] [data-flux-input],
+[data-admin-shell] [data-flux-select],
+[data-admin-shell] [data-flux-textarea],
+[data-admin-shell] [data-flux-badge],
+[data-admin-shell] [data-flux-modal] dialog,
+[data-admin-shell] .flux-card,
+[data-admin-shell] [data-flux-card] {
+    border-radius: 0 !important;
+}
+

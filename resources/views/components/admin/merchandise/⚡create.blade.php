@@ -42,7 +42,8 @@ new class extends Component {
         $this->reset();
 
         $this->dispatch('product-created');
-        $this->dispatch('modal-close', name: 'registry-modal');
+        $this->dispatch('notify', message: 'PRODUCT CREATED', type: 'success');
+        $this->js('$flux.modal("add-product-modal").close()');
     }
 
     public function addCategory()
@@ -76,16 +77,11 @@ new class extends Component {
 
 <div x-data="{ showNewCat: false }"
      x-on:category-added.window="showNewCat = false"
-     class="p-6 gothic-theme">
+     class="p-2">
 
-    <flux:header class="mb-8 border-b border-black dark:border-white pb-4">
-        <flux:heading size="xl" class="uppercase italic font-black tracking-tighter">
-            01 / Identity Registry
-        </flux:heading>
-
-        <flux:subheading class="uppercase text-[9px] tracking-[0.3em]">
-            Establish core merchandise data
-        </flux:subheading>
+    <flux:header class="mb-8 border-b border-black/15 dark:border-white/15 pb-4">
+        <flux:heading size="lg">Add Product</flux:heading>
+        <flux:subheading>Establish the core product details — colorways and sizing come next.</flux:subheading>
     </flux:header>
 
     <form wire:submit="createDraft" class="space-y-8">
@@ -143,7 +139,7 @@ new class extends Component {
         {{-- QUICK CATEGORY TOOL --}}
         <div x-show="showNewCat"
              x-collapse
-             class="p-4 bg-zinc-50 dark:bg-zinc-900 border border-black/10 flex gap-3 items-end">
+             class="p-4  bg-zinc-50 dark:bg-zinc-900 border border-black/15 dark:border-white/15 flex gap-3 items-end">
 
             <flux:input
                 wire:model="new_category_name"
@@ -155,7 +151,7 @@ new class extends Component {
                 type="button"
                 wire:click="addCategory"
                 size="sm"
-                class="bg-black text-white dark:bg-white dark:text-black rounded-none"
+                variant="primary"
             >
                 Add
             </flux:button>
@@ -205,15 +201,10 @@ new class extends Component {
         </div>
 
         {{-- SUBMIT --}}
-        <div class="pt-6 border-t border-black/10 flex justify-end">
-
-            <flux:button
-                type="submit"
-                class="bg-black text-white dark:bg-white dark:text-black px-16 h-14 uppercase tracking-[0.4em] font-black text-[11px] hover:invert rounded-none"
-            >
-                Register Draft
+        <div class="pt-6 border-t border-black/15 dark:border-white/15 flex justify-end">
+            <flux:button type="submit" variant="primary">
+                Create Product
             </flux:button>
-
         </div>
 
     </form>

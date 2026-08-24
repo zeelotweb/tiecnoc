@@ -57,19 +57,15 @@ new class extends Component {
 ?>
 
 
-<div class="space-y-6">
+<div class="space-y-4">
 
-    @foreach($staff as $member)
-        <div class="border border-black dark:border-white p-4">
+    @forelse($staff as $member)
+        <div class=" border border-black/15 dark:border-white/15 p-4">
 
             {{-- NAME --}}
-            <div class="mb-4">
-                <p class="font-black uppercase text-sm">
-                    {{ $member->name }}
-                </p>
-                <p class="text-[10px] opacity-40">
-                    {{ $member->email }}
-                </p>
+            <div class="mb-3">
+                <p class="font-medium text-sm">{{ $member->name }}</p>
+                <p class="text-xs text-zinc-500">{{ $member->email }}</p>
             </div>
 
             {{-- DUTIES --}}
@@ -85,10 +81,10 @@ new class extends Component {
 
                     <button
                         wire:click="toggleTool({{ $member->id }}, '{{ $key }}')"
-                        class="px-3 py-2 text-[10px] font-black uppercase tracking-widest border-2 transition-all
-                        {{ $assigned 
-                            ? 'bg-emerald-500 text-white border-emerald-500' 
-                            : 'border-black dark:border-white opacity-40 hover:opacity-100' }}"
+                        class="px-3 py-1.5 text-xs  border transition-colors
+                        {{ $assigned
+                            ? 'bg-emerald-500 text-white border-emerald-500'
+                            : 'border-black/15 dark:border-white/15 text-zinc-500 hover:border-black/40 dark:hover:border-white/40' }}"
                     >
                         {{ $label }}
                     </button>
@@ -98,6 +94,8 @@ new class extends Component {
             </div>
 
         </div>
-    @endforeach
+    @empty
+        <p class="text-sm text-zinc-500">No staff members yet.</p>
+    @endforelse
 
 </div>

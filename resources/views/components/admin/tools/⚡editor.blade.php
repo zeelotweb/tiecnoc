@@ -23,6 +23,14 @@ new class extends Component {
      * Listener: Hydrates the component when the Matrix trigger is clicked.
      * The parameter names MUST match the keys in the $dispatch object.
      */
+    // Direct-embed entry point (product edit page tab).
+    public function mount($productId = null)
+    {
+        if ($productId) {
+            $this->hydrateEditor($productId);
+        }
+    }
+
     #[On('load-editor-tool')]
     public function hydrateEditor($id)
     {
@@ -67,28 +75,20 @@ new class extends Component {
         ]);
 
         // Feedback & Global Resets
-        $this->dispatch('product-updated'); 
-        $this->dispatch('modal-close', name: 'edit-modal');
+        $this->dispatch('product-updated');
         $this->dispatch('notify', message: 'REGISTRY IDENTITY UPDATED', type: 'success');
-            // ... validation and update logic ...
-    $this->dispatch('matrix-updated'); // <--- PING
- 
+        $this->dispatch('matrix-updated');
+    }
+
+    public function discard()
+    {
+        $this->hydrateEditor($this->model_id);
     }
 }; 
 ?>
 
-<div class="p-8 gothic-theme">
+<div>
     @if($model_id)
-        {{-- Header Section --}}
-        <flux:header class="flex-col mb-10 border-b border-black dark:border-white pb-6 w-full">
-            <flux:heading size="xl" class="flex uppercase italic font-black tracking-tighter w-full">
-                04 / Meta Editor
-            </flux:heading>
-            <flux:subheading class="flex uppercase text-[9px] tracking-[0.4em] opacity-60 w-full">
-                Registry Sync / ID: <span class="text-black dark:text-white font-black">{{ $model_id }}</span>
-            </flux:subheading>
-        </flux:header>
-
         {{-- Form Section --}}
         <form wire:submit="updateRegistry" class="space-y-8">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -115,30 +115,27 @@ new class extends Component {
             </div>
 
             {{-- Footer / Actions --}}
-            <div class="pt-8 border-t border-black/10 dark:border-white/10 flex justify-between items-center">
-                <div class="flex items-center gap-4">
-                    <flux:label class="uppercase text-[10px] font-black tracking-widest">Status</flux:label>
-                    {{-- Fixed Flux Select syntax --}}
+            <div class="pt-6 border-t border-black/15 dark:border-white/15 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <flux:label>Status</flux:label>
                     <flux:select wire:model="status" class="w-32">
-                        <flux:select.option value="draft">STAGING</flux:select.option>
-                        <flux:select.option value="live">LIVE</flux:select.option>
+                        <flux:select.option value="draft">Draft</flux:select.option>
+                        <flux:select.option value="live">Live</flux:select.option>
                     </flux:select>
                 </div>
 
                 <div class="flex gap-3">
-                    <flux:button variant="ghost" x-on:click="$dispatch('modal-close', { name: 'edit-modal' })" class="uppercase text-[10px] tracking-widest font-bold">Discard</flux:button>
-                    <flux:button type="submit" class="bg-black text-white dark:bg-white dark:text-black px-12 h-14 uppercase tracking-[0.4em] font-black text-[11px] hover:invert rounded-none transition-all">
-                        Commit Update
+                    <flux:button variant="ghost" wire:click="discard">Discard</flux:button>
+                    <flux:button type="submit" variant="primary">
+                        Save Changes
                     </flux:button>
                 </div>
             </div>
         </form>
     @else
         {{-- Loading State --}}
-        <div class="h-64 flex flex-col items-center justify-center space-y-4 opacity-30 italic uppercase text-[10px] tracking-[0.5em] text-center">
-            <flux:spacer />
-            <p>Accessing Matrix Registry Data...</p>
-            <flux:spacer />
+        <div class="h-48 flex items-center justify-center text-sm text-zinc-500">
+            Select a product to edit.
         </div>
     @endif
 </div>

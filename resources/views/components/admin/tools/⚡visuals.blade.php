@@ -1,21 +1,25 @@
 <?php
 
 use Livewire\Component;
-use Livewire\WithFileUploads;
 use Livewire\Attributes\On;
 use App\Services\Admin\ProductContextService;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 new class extends Component {
-
-    use WithFileUploads;
 
     public $product_id;
 
     public $active_color = '';
     public $active_hex = '';
 
-    public $front_file;
-    public $back_file;
+    // Bare temp/ basenames handed back by /admin/upload/complete — not file
+    // objects. The chunked Uppy transport owns the actual bytes; these are
+    // just pointers into storage/app/public/temp until saveImages() promotes
+    // them, same "assemble to temp, promote on save" shape ProductMediaService
+    // already uses for the product-level gallery.
+    public $front_path = '';
+    public $back_path = '';
 
     public function selectActiveColor($name, $hex)
     {
@@ -28,17 +32,12 @@ new class extends Component {
         $this->validate([
             'product_id'   => 'required|exists:products,id',
             'active_color' => 'required|string',
-            'front_file'   => 'nullable|image|max:10240',
-            'back_file'    => 'nullable|image|max:10240',
+            'front_path'   => 'nullable|string',
+            'back_path'    => 'nullable|string',
         ]);
 
-        $frontPath = $this->front_file
-            ? $this->front_file->store("merch/tmp", 'public')
-            : null;
-
-        $backPath = $this->back_file
-            ? $this->back_file->store("merch/tmp", 'public')
-            : null;
+        $frontPath = $this->front_path ? $this->promote($this->front_path, 'front') : null;
+        $backPath  = $this->back_path ? $this->promote($this->back_path, 'back') : null;
 
         $service->attachUploadedColorImages(
             $this->product_id,
@@ -50,8 +49,36 @@ new class extends Component {
 
         $this->dispatch('notify', message: 'ASSETS SYNCED');
 
-        $this->reset(['front_file', 'back_file']);
+        $this->reset(['front_path', 'back_path']);
         $this->dispatch('reset-ponds');
+    }
+
+    // Moves an assembled chunk-upload result out of temp/ into a stable,
+    // product-scoped path. Assembly (ChunkUploadController::complete) already
+    // validated size and hands back a bare basename inside temp/.
+    protected function promote(string $tempBasename, string $side): string
+    {
+        $source = "temp/{$tempBasename}";
+
+        if (!Storage::disk('public')->exists($source)) {
+            throw new \Exception("Uploaded {$side} asset is missing — please re-upload.");
+        }
+
+        $extension = pathinfo($tempBasename, PATHINFO_EXTENSION);
+        $final = "media/colors/{$this->product_id}/" . Str::slug($this->active_color) . "-{$side}-" . Str::uuid() . ".{$extension}";
+
+        Storage::disk('public')->move($source, $final);
+
+        return $final;
+    }
+
+    // Direct-embed entry point (product edit page tab) — the event listener
+    // below stays for anything still dispatching the old modal-trigger event.
+    public function mount($productId = null)
+    {
+        if ($productId) {
+            $this->init($productId);
+        }
     }
 
     #[On('load-visuals-tool')]
@@ -62,8 +89,8 @@ new class extends Component {
         $this->reset([
             'active_color',
             'active_hex',
-            'front_file',
-            'back_file'
+            'front_path',
+            'back_path',
         ]);
 
         $this->dispatch('reset-ponds');
@@ -86,49 +113,34 @@ new class extends Component {
 ?>
 
 
-<div class="w-full overflow-hidden p-6 space-y-12 bg-white dark:bg-black text-black dark:text-white border border-black/10">
+<div class="space-y-10">
 
     {{-- HEADER --}}
-    <header class="flex flex-col border-b-2 border-black dark:border-white pb-8 gap-6">
-        
-        <div>
-            <flux:heading size="xl" class="uppercase tracking-tighter font-black italic break-words leading-none">
-                {{ $product->name ?? 'STUDIO_ASSET_MANAGER' }}
-            </flux:heading>
-
-            <div class="flex flex-col gap-2 mt-4">
-                <p class="text-[10px] uppercase tracking-[0.4em] opacity-40 italic">
-                    Mapping / {{ $active_color ?: 'AWAITING_SELECTION' }}
-                </p>
-
-                @if($active_hex)
-                    <div class="w-4 h-4 border border-black/20"
-                         style="background-color: {{ $active_hex }}"></div>
-                @endif
-            </div>
+    <header class="flex flex-col gap-4">
+        <div class="flex items-center gap-3">
+            <p class="text-sm text-zinc-500">
+                Colorway: {{ $active_color ?: 'none selected' }}
+            </p>
+            @if($active_hex)
+                <div class="w-4 h-4 rounded border border-zinc-300 dark:border-zinc-700"
+                     style="background-color: {{ $active_hex }}"></div>
+            @endif
         </div>
 
-        @if($active_color && ($front_file || $back_file))
-            <flux:button 
-                wire:click="saveImages" 
-                wire:loading.attr="disabled"
-                class="w-full bg-black text-white dark:bg-white dark:text-black rounded-none px-6 h-14 uppercase tracking-[0.4em] text-[11px] font-black hover:invert transition-all border-none">
-                
-                <span wire:loading.remove>Commit to Storage</span>
-                <span wire:loading>Syncing...</span>
-
+        @if($active_color && ($front_path || $back_path))
+            <flux:button wire:click="saveImages" wire:loading.attr="disabled" variant="primary">
+                <span wire:loading.remove>Save Images</span>
+                <span wire:loading>Saving…</span>
             </flux:button>
         @endif
     </header>
 
     {{-- BODY --}}
-    <div class="flex flex-col gap-12">
+    <div class="flex flex-col gap-10">
 
         {{-- COLOR SELECTION --}}
-        <section class="flex flex-col gap-6">
-            <flux:label class="uppercase text-[11px] font-black tracking-[0.2em] border-l-4 border-black dark:border-white pl-4 italic">
-                01 / Metadata Identity
-            </flux:label>
+        <section class="flex flex-col gap-4">
+            <flux:label>Colorway</flux:label>
 
             <div class="flex flex-wrap gap-2">
                 @php
@@ -146,95 +158,95 @@ new class extends Component {
                 @endphp
 
                 @foreach($palette as $name => $hex)
-                    <button 
+                    <button
                         type="button"
-                        wire:click="selectActiveColor('{{ $name }}', '{{ $hex }}')" 
-                        class="flex items-center gap-3 text-[10px] uppercase border-2 px-5 py-3 transition-all
-                        {{ $active_color === $name 
-                            ? 'bg-black text-white border-black dark:bg-white dark:text-black'
-                            : 'border-black/10 opacity-70' }}">
+                        wire:click="selectActiveColor('{{ $name }}', '{{ $hex }}')"
+                        class="flex items-center gap-2 text-sm  border px-3 py-2 transition-colors
+                        {{ $active_color === $name
+                            ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-zinc-900 dark:border-white'
+                            : 'border-black/15 dark:border-white/15 hover:border-black/40 dark:hover:border-white/40' }}">
 
-                        <span class="w-3 h-3" style="background-color: {{ $hex }}"></span>
+                        <span class="w-3 h-3 rounded-full border border-black/10" style="background-color: {{ $hex }}"></span>
                         {{ $name }}
                     </button>
                 @endforeach
             </div>
         </section>
 
-        {{-- ASSET MATRIX (NOW COLORS, NOT VARIANTS) --}}
-        <section class="flex flex-col gap-6 border-t border-black/10 pt-8">
-            <flux:label class="uppercase text-[10px] font-bold tracking-[0.3em] opacity-30 italic">
-                04 / Asset_Matrix
-            </flux:label>
+        {{-- EXISTING COLORWAYS --}}
+        <section class="flex flex-col gap-3 border-t border-black/15 dark:border-white/15 pt-6">
+            <flux:label>Existing Colorways</flux:label>
 
             <div class="flex flex-col gap-2">
                 @forelse($colors as $color)
                     <div class="flex items-center gap-3">
-                        <div 
-                            class="w-6 h-6 border"
-                            style="background-color: {{ $color->hex_code }}">
+                        <div class="w-5 h-5 rounded border border-zinc-300 dark:border-zinc-700"
+                             style="background-color: {{ $color->hex_code }}">
                         </div>
-                        <span class="text-[10px] uppercase font-black">
-                            {{ $color->name }}
-                        </span>
+                        <span class="text-sm">{{ $color->color_name }}</span>
                     </div>
                 @empty
-                    <p class="text-[10px] uppercase opacity-20 italic">
-                        Inventory_Null
-                    </p>
+                    <p class="text-sm text-zinc-500">No colorways yet.</p>
                 @endforelse
             </div>
         </section>
 
         {{-- UPLOADERS --}}
-        <section class="flex flex-col gap-10 {{ !$active_color ? 'opacity-20 pointer-events-none' : '' }}">
+        <section class="grid grid-cols-1 sm:grid-cols-2 gap-6 {{ !$active_color ? 'opacity-40 pointer-events-none' : '' }}"
+             x-data="{
+                frontPct: 0, backPct: 0,
+                frontErr: '', backErr: '',
+                frontPond: null, backPond: null,
+             }"
+             x-on:reset-ponds.window="frontPct = 0; backPct = 0; frontErr = ''; backErr = '';">
+
 {{-- FRONT --}}
-<div class="flex flex-col gap-4">
-    <flux:label class="uppercase tracking-[0.4em] text-[11px] font-black italic">
-        02 / Front_Asset
-    </flux:label>
+<div class="flex flex-col gap-3">
+    <div class="flex items-center gap-2">
+        <flux:label>Front</flux:label>
+        @if($front_path)
+            <flux:icon.check-circle variant="micro" class="text-emerald-500" />
+        @endif
+    </div>
 
-    @if($front_file)
-        <flux:icon.check size="sm" class="text-green-500" />
-    @endif
-
-    <div wire:ignore class="gothic-pond-wrapper">
-        <input type="file" x-init="
-            FilePond.create($el, { 
-                labelIdle: '<span class=\'text-[10px] uppercase tracking-[0.3em] font-bold\'>Upload_Rendering</span>',
-                server: { process: (n, f, m, l, e, p) => { @this.upload('front_file', f, l, e, p); } } 
-            });
-            {{-- ⚡ Listen for the reset event and purge the files --}}
-            window.addEventListener('reset-ponds', () => {
-                const pond = FilePond.find($el);
-                if (pond) pond.removeFiles();
-            });
-        ">
+    <div class=" border border-dashed border-zinc-300 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-600 p-6 text-center cursor-pointer transition-colors"
+         x-on:click="frontPond.browse()">
+        <input type="file" accept="image/*" class="hidden" wire:ignore
+            x-init="frontPond = window.initColorImagePond($el, {
+                onStart() { frontPct = 1; frontErr = ''; },
+                onProgress(p) { frontPct = p; },
+                onComplete(name) { frontPct = 100; $wire.set('front_path', name); },
+                onError() { frontPct = 0; frontErr = 'Upload failed — try again.'; },
+            })">
+        <span class="text-sm text-zinc-500" x-show="frontPct === 0">Click to upload</span>
+        <span class="text-sm text-zinc-500" x-show="frontPct > 0 && frontPct < 100" x-text="'Uploading ' + frontPct + '%'"></span>
+        <span class="text-sm text-emerald-600 dark:text-emerald-400" x-show="frontPct === 100">Uploaded</span>
+        <p class="text-xs text-red-500 mt-2" x-show="frontErr" x-text="frontErr"></p>
     </div>
 </div>
 
 {{-- BACK --}}
-<div class="flex flex-col gap-4">
-    <flux:label class="uppercase tracking-[0.4em] text-[11px] font-black italic">
-        03 / Reverse_Asset
-    </flux:label>
+<div class="flex flex-col gap-3">
+    <div class="flex items-center gap-2">
+        <flux:label>Back</flux:label>
+        @if($back_path)
+            <flux:icon.check-circle variant="micro" class="text-emerald-500" />
+        @endif
+    </div>
 
-    @if($back_file)
-        <flux:icon.check size="sm" class="text-green-500" />
-    @endif
-
-    <div wire:ignore class="gothic-pond-wrapper">
-        <input type="file" x-init="
-            FilePond.create($el, { 
-                labelIdle: '<span class=\'text-[10px] uppercase tracking-[0.3em] font-bold\'>Upload_Rendering</span>',
-                server: { process: (n, f, m, l, e, p) => { @this.upload('back_file', f, l, e, p); } } 
-            });
-            {{-- ⚡ Listen for the reset event and purge the files --}}
-            window.addEventListener('reset-ponds', () => {
-                const pond = FilePond.find($el);
-                if (pond) pond.removeFiles();
-            });
-        ">
+    <div class=" border border-dashed border-zinc-300 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-600 p-6 text-center cursor-pointer transition-colors"
+         x-on:click="backPond.browse()">
+        <input type="file" accept="image/*" class="hidden" wire:ignore
+            x-init="backPond = window.initColorImagePond($el, {
+                onStart() { backPct = 1; backErr = ''; },
+                onProgress(p) { backPct = p; },
+                onComplete(name) { backPct = 100; $wire.set('back_path', name); },
+                onError() { backPct = 0; backErr = 'Upload failed — try again.'; },
+            })">
+        <span class="text-sm text-zinc-500" x-show="backPct === 0">Click to upload</span>
+        <span class="text-sm text-zinc-500" x-show="backPct > 0 && backPct < 100" x-text="'Uploading ' + backPct + '%'"></span>
+        <span class="text-sm text-emerald-600 dark:text-emerald-400" x-show="backPct === 100">Uploaded</span>
+        <p class="text-xs text-red-500 mt-2" x-show="backErr" x-text="backErr"></p>
     </div>
 </div>
 
@@ -243,9 +255,9 @@ new class extends Component {
 
         {{-- EMPTY STATE --}}
         @if(!$active_color)
-            <div class="p-6 border-2 border-dashed border-black/5 dark:border-white/5 text-center">
-                <p class="text-[11px] uppercase tracking-[0.5em] opacity-30 italic font-black">
-                    Select Metadata Context To Unlock Uploaders
+            <div class="p-6  border border-dashed border-black/15 dark:border-white/15 text-center">
+                <p class="text-sm text-zinc-500">
+                    Select a colorway above to upload images.
                 </p>
             </div>
         @endif

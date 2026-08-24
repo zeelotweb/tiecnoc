@@ -12,6 +12,8 @@ new class extends Component {
 
     public $selectedColorId = null;
     public $selectedVariantId = null;
+    public $activeImage = 'front'; // 'front' | 'back' — which color asset the main stage shows
+    public $quantity = 1;
 
     /*
     |--------------------------------------------------------------------------
@@ -26,9 +28,15 @@ new class extends Component {
         $this->selectedColorId = $this->product->colors
             ->first()?->id;
 
-        // auto-select first valid variant if available
-        $this->selectedVariantId = $this->activeVariants->first()?->id;
+        // auto-select first IN-STOCK variant if available — never pre-select
+        // a sold-out size, or "Add to Cart" would go live on it.
+        $this->selectedVariantId = $this->firstInStockVariant()?->id;
 
+    }
+
+    protected function firstInStockVariant()
+    {
+        return $this->activeVariants->first(fn ($v) => $v->stock_quantity > 0);
     }
 
     /*
@@ -39,9 +47,20 @@ new class extends Component {
     public function selectColor($colorId)
     {
         $this->selectedColorId = $colorId;
+        $this->activeImage = 'front';
 
         // reset variant safely within new color context
-        $this->selectedVariantId = $this->activeVariants->first()?->id;
+        $this->selectedVariantId = $this->firstInStockVariant()?->id;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | THUMBNAIL SELECTION (MAIN STAGE)
+    |--------------------------------------------------------------------------
+    */
+    public function selectImage($which)
+    {
+        $this->activeImage = $which;
     }
 
     /*
@@ -51,7 +70,27 @@ new class extends Component {
     */
     public function selectSize($variantId)
     {
+        $variant = $this->activeVariants->firstWhere('id', $variantId);
+
+        if (!$variant || $variant->stock_quantity <= 0) return;
+
         $this->selectedVariantId = $variantId;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | QUANTITY
+    |--------------------------------------------------------------------------
+    */
+    public function incrementQuantity()
+    {
+        $max = $this->activeVariants->firstWhere('id', $this->selectedVariantId)?->stock_quantity ?? 99;
+        $this->quantity = min($this->quantity + 1, max($max, 1));
+    }
+
+    public function decrementQuantity()
+    {
+        $this->quantity = max(1, $this->quantity - 1);
     }
 
     /*
@@ -72,12 +111,13 @@ new class extends Component {
         }
 
         try {
-            $cart->add($this->selectedVariantId);
+            $cart->add($this->selectedVariantId, $this->quantity);
 
             $this->dispatch('notify', message: 'ADDED TO CART', type: 'success');
             $this->dispatch('cart-updated');
 
             $this->selectedVariantId = null;
+            $this->quantity = 1;
 
         } catch (\Exception $e) {
             $this->dispatch('notify', message: 'SYSTEM ERROR', type: 'error');
@@ -126,67 +166,56 @@ new class extends Component {
 <div class="max-w-7xl mx-auto p-4 lg:p-10 lg:grid lg:grid-cols-2 lg:gap-16 font-sans text-black dark:text-white">
 
     {{-- =========================
-        LEFT: VISUAL + IDENTITY LAYER
+        LEFT: GALLERY (THUMBNAIL RAIL + MAIN STAGE)
     ========================== --}}
-    <div class="space-y-6">
+    <div class="flex flex-col-reverse sm:flex-row gap-4">
 
-        @php 
+        @php
             $color = $this->activeColor;
             $front = $color?->front_image_path;
             $back  = $color?->back_image_path;
+            $thumbs = collect([
+                $front ? ['key' => 'front', 'path' => $front] : null,
+                $back  ? ['key' => 'back',  'path' => $back]  : null,
+            ])->filter()->values();
+            $stagePath = $activeImage === 'back' && $back ? $back : $front;
         @endphp
 
-        {{-- IMAGE WRAPPER --}}
-        <div class="relative group aspect-[3/4] bg-zinc-100 dark:bg-zinc-900 border-2 border-black dark:border-white overflow-hidden cursor-crosshair">
+        {{-- THUMBNAIL RAIL --}}
+        @if($thumbs->count() > 1)
+            <div class="flex sm:flex-col gap-3 sm:w-20 shrink-0">
+                @foreach($thumbs as $t)
+                    <button wire:click="selectImage('{{ $t['key'] }}')"
+                            class="aspect-[3/4] w-16 sm:w-full bg-zinc-100 dark:bg-zinc-900 border-2 overflow-hidden shrink-0 transition-all
+                            {{ $activeImage === $t['key'] ? 'border-black dark:border-white' : 'border-transparent opacity-50 hover:opacity-100' }}">
+                        <img src="{{ asset('storage/' . $t['path']) }}" class="w-full h-full object-cover">
+                    </button>
+                @endforeach
+            </div>
+        @endif
+
+        {{-- MAIN STAGE --}}
+        <div class="relative flex-1 aspect-[3/4] bg-zinc-100 dark:bg-zinc-900 border-2 border-black dark:border-white overflow-hidden">
 
             {{-- NAME OVERLAY --}}
-            <div class="absolute top-4 left-4 z-1 bg-black text-white px-3 py-2 opacity-70">
+            <div class="absolute top-4 left-4 z-10 bg-black text-white px-3 py-2 opacity-70">
                 <h1 class="text-sm md:text-lg font-black uppercase italic tracking-tight">
                     {{ $product->name }}
                 </h1>
             </div>
 
-            @if($front)
-                <img src="{{ asset('storage/' . $front) }}"
-                     class="absolute inset-0 w-full h-full object-cover transition-opacity duration-700 group-hover:opacity-0">
-            @endif
-
-            @if($back)
-                <img src="{{ asset('storage/' . $back) }}"
-                     class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-700 group-hover:opacity-100">
+            @if($stagePath)
+                <img src="{{ asset('storage/' . $stagePath) }}"
+                     wire:key="stage-{{ $selectedColorId }}-{{ $activeImage }}"
+                     class="absolute inset-0 w-full h-full object-cover">
+            @else
+                <div class="absolute inset-0 flex items-center justify-center text-[10px] uppercase tracking-widest opacity-30 italic">
+                    No Visual Registered
+                </div>
             @endif
 
             <div class="absolute bottom-4 left-4 bg-[#E31837] text-white px-3 py-1 text-[10px] font-black uppercase italic shadow-lg">
                 {{ $product->gender }}
-            </div>
-        </div>
-
-        {{-- =========================
-            COLORS (NOW PRIMARY ACTION)
-        ========================== --}}
-        <div class="space-y-3">
-
-            <label class="uppercase text-[10px] font-black tracking-widest italic">
-                Colorway Context
-            </label>
-
-            <div class="flex flex-wrap gap-4">
-                @foreach($product->colors as $c)
-                    <button wire:click="selectColor({{ $c->id }})"
-                            class="group transition-transform active:scale-90">
-
-                        <div class="w-8 h-8 border-2 
-                            {{ $selectedColorId == $c->id 
-                                ? 'border-cyan-600 scale-110 shadow-xl' 
-                                : 'border-black dark:border-white opacity-60' }} p-1">
-
-                            <div class="w-full h-full border border-black/10"
-                                 style="background-color: {{ $c->hex_code }}">
-                            </div>
-                        </div>
-
-                    </button>
-                @endforeach
             </div>
         </div>
 
@@ -209,6 +238,35 @@ new class extends Component {
             </span>
         </div>
 
+        {{-- =========================
+            COLORS
+        ========================== --}}
+        <div class="space-y-3 pt-2">
+            <label class="uppercase text-[10px] font-black tracking-widest italic">
+                Colorway {{ $color?->color_name ? "/ {$color->color_name}" : '' }}
+            </label>
+
+            <div class="flex flex-wrap gap-4">
+                @foreach($product->colors as $c)
+                    <button wire:click="selectColor({{ $c->id }})"
+                            title="{{ $c->color_name }}"
+                            class="group transition-transform active:scale-90">
+
+                        <div class="w-8 h-8 border-2
+                            {{ $selectedColorId == $c->id
+                                ? 'border-cyan-600 scale-110 shadow-xl'
+                                : 'border-black dark:border-white opacity-60' }} p-1">
+
+                            <div class="w-full h-full border border-black/10"
+                                 style="background-color: {{ $c->hex_code }}">
+                            </div>
+                        </div>
+
+                    </button>
+                @endforeach
+            </div>
+        </div>
+
         {{-- DESCRIPTION --}}
         <div class="italic opacity-90 lowercase tracking-tight text-xs leading-relaxed w-full font-medium border-l-2 border-pink-600 dark:border-cyan-700 p-2 bg-neutral-100 dark:bg-neutral-800 {{ $product->description ? '':'hidden'}}">
             {{ $product->description ?? 'No registry narrative established.' }}
@@ -222,14 +280,18 @@ new class extends Component {
 
             <div class="flex flex-wrap gap-3">
                 @forelse($this->activeVariants as $v)
-                    <button 
+                    @php $soldOut = $v->stock_quantity <= 0; @endphp
+                    <button
                         wire:click="selectSize({{ $v->id }})"
-                        class="w-auto h-auto border-1 flex items-center justify-center p-2 transition-all
-                        {{ $selectedVariantId == $v->id 
-                            ? 'bg-[#E31837] border-[#E31837] text-white' 
-                            : 'border-black dark:border-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black' }}">
+                        {{ $soldOut ? 'disabled' : '' }}
+                        class="relative w-auto h-auto border-1 flex items-center justify-center p-2 transition-all
+                        {{ $soldOut
+                            ? 'border-black/20 dark:border-white/20 opacity-30 cursor-not-allowed'
+                            : ($selectedVariantId == $v->id
+                                ? 'bg-[#E31837] border-[#E31837] text-white'
+                                : 'border-black dark:border-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black') }}">
 
-                        <span class="text-xs font-black uppercase italic tracking-tighter">
+                        <span class="text-xs font-black uppercase italic tracking-tighter {{ $soldOut ? 'line-through' : '' }}">
                             {{ $v->size }}
                         </span>
                     </button>
@@ -240,6 +302,27 @@ new class extends Component {
                 @endforelse
             </div>
         </div>
+
+        {{-- QUANTITY --}}
+        @if($selectedVariantId)
+            <div class="space-y-4 pt-2">
+                <label class="uppercase text-[10px] font-black tracking-widest italic">
+                    Quantity
+                </label>
+
+                <div class="flex items-center border-2 border-black dark:border-white w-fit">
+                    <button wire:click="decrementQuantity" type="button"
+                            class="w-10 h-10 flex items-center justify-center font-black text-lg hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all">
+                        &minus;
+                    </button>
+                    <span class="w-12 text-center font-black italic">{{ $quantity }}</span>
+                    <button wire:click="incrementQuantity" type="button"
+                            class="w-10 h-10 flex items-center justify-center font-black text-lg hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all">
+                        &plus;
+                    </button>
+                </div>
+            </div>
+        @endif
 
         {{-- SPECS (PUSHED DOWN) --}}
         <div class="grid grid-cols-2 gap-8 py-10 border-t border-black dark:border-white">

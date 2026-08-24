@@ -4,7 +4,8 @@ use Livewire\Component;
 use App\Models\Product;
 use App\Models\ProductColor;
 use App\Models\ProductVariant;
-use App\Models\Reaction;
+use App\Models\Order;
+use App\Models\OrderItem;
 
 new class extends Component {
 
@@ -12,203 +13,106 @@ new class extends Component {
     {
         /*
         |--------------------------------------------------------------------------
-        | BASE COUNTS
+        | SALES (WHAT'S ACTUALLY MOVING)
+        |--------------------------------------------------------------------------
+        */
+        $paidOrders = Order::where('status', 'paid');
+
+        $revenue = (clone $paidOrders)->sum('total_amount');
+        $orderCount = (clone $paidOrders)->count();
+
+        $unitsSold = OrderItem::whereHas('order', fn ($q) => $q->where('status', 'paid'))->sum('qty');
+
+        $topSellers = OrderItem::whereHas('order', fn ($q) => $q->where('status', 'paid'))
+            ->selectRaw('name, attr, SUM(qty) as units, SUM(qty * price) as revenue')
+            ->groupBy('name', 'attr')
+            ->orderByDesc('units')
+            ->take(5)
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | STOCK HEALTH
+        |--------------------------------------------------------------------------
+        */
+        $lowStock = ProductVariant::with('color.product')
+            ->where('stock_quantity', '<=', 5)
+            ->orderBy('stock_quantity')
+            ->take(6)
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | CATALOG SIZE (CONTEXT ONLY)
         |--------------------------------------------------------------------------
         */
         $products = Product::count();
-
-        /*
-        |--------------------------------------------------------------------------
-        | PRODUCTS BY GENDER (ONLY SELLABLE)
-        |--------------------------------------------------------------------------
-        */
-        $productsByGender = Product::selectRaw('gender, COUNT(*) as total')
-            ->whereHas('colors', fn ($q) => $q->where('status', 'live'))
-            ->groupBy('gender')
-            ->pluck('total', 'gender');
-
-        /*
-        |--------------------------------------------------------------------------
-        | COLORS (GLOBAL + LIVE)
-        |--------------------------------------------------------------------------
-        */
-        $colorsTotal = ProductColor::count();
-        $colorsLive  = ProductColor::where('status', 'live')->count();
-
-        /*
-        |--------------------------------------------------------------------------
-        | COLORS BY GENDER
-        |--------------------------------------------------------------------------
-        */
-        $colorsByGender = ProductColor::selectRaw('products.gender, COUNT(*) as total')
-            ->join('products', 'products.id', '=', 'product_colors.product_id')
-            ->where('product_colors.status', 'live')
-            ->groupBy('products.gender')
-            ->pluck('total', 'gender');
-
-        /*
-        |--------------------------------------------------------------------------
-        | VARIANTS
-        |--------------------------------------------------------------------------
-        */
-        $variantsTotal = ProductVariant::count();
-
-        $variantsByGender = ProductVariant::selectRaw('products.gender, COUNT(*) as total')
-            ->join('product_colors', 'product_colors.id', '=', 'product_variants.product_color_id')
-            ->join('products', 'products.id', '=', 'product_colors.product_id')
-            ->groupBy('products.gender')
-            ->pluck('total', 'gender');
-
-        /*
-        |--------------------------------------------------------------------------
-        | COLORS PER PRODUCT (AVG)
-        |--------------------------------------------------------------------------
-        */
-        $avgColorsPerProduct = ProductColor::selectRaw('AVG(cnt) as avg')
-            ->fromSub(function ($q) {
-                $q->from('product_colors')
-                  ->selectRaw('product_id, COUNT(*) as cnt')
-                  ->groupBy('product_id');
-            }, 'sub')
-            ->value('avg');
-
-        /*
-        |--------------------------------------------------------------------------
-        | FAVORITES (REACTIONS)
-        |--------------------------------------------------------------------------
-        */
-        $favoritesTotal = Reaction::where('type', 'favorite')->count();
-
-        $favoritesByGender = Reaction::selectRaw('products.gender, COUNT(*) as total')
-            ->join('product_variants', 'product_variants.id', '=', 'reactions.product_variant_id')
-            ->join('product_colors', 'product_colors.id', '=', 'product_variants.product_color_id')
-            ->join('products', 'products.id', '=', 'product_colors.product_id')
-            ->where('reactions.type', 'favorite')
-            ->groupBy('products.gender')
-            ->pluck('total', 'gender');
+        $colorsLive = ProductColor::where('status', 'live')->count();
 
         return [
+            'revenue' => $revenue,
+            'orderCount' => $orderCount,
+            'unitsSold' => $unitsSold,
+            'topSellers' => $topSellers,
+            'lowStock' => $lowStock,
             'products' => $products,
-
-            'productsByGender' => $productsByGender,
-
-            'colorsTotal' => $colorsTotal,
-            'colorsLive'  => $colorsLive,
-            'colorsByGender' => $colorsByGender,
-
-            'variantsTotal' => $variantsTotal,
-            'variantsByGender' => $variantsByGender,
-
-            'avgColorsPerProduct' => round($avgColorsPerProduct, 2),
-
-            'favoritesTotal' => $favoritesTotal,
-            'favoritesByGender' => $favoritesByGender,
+            'colorsLive' => $colorsLive,
         ];
     }
 };
 ?>
 
-<div class="max-w-7xl mx-auto p-6 lg:p-10 space-y-10 font-sans">
+<div class="space-y-10">
 
-    {{-- HEADER --}}
-    <div class="border-b-4 border-black dark:border-white pb-4">
-        <h1 class="text-xl md:text-2xl font-black uppercase tracking-widest italic">
-            Global Shop Matrix
-        </h1>
-    </div>
-
-    {{-- GRID --}}
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-
-        {{-- PRODUCTS --}}
-        <div class="p-4 border border-black dark:border-white">
-            <p class="text-[10px] uppercase opacity-40">Total Products</p>
-            <p class="text-2xl font-black">{{ $products }}</p>
+    {{-- SALES --}}
+    <div class="grid grid-cols-3 gap-4">
+        <div class="border border-black/15 dark:border-white/15 p-4">
+            <p class="text-xs text-zinc-500 mb-1">Revenue</p>
+            <p class="text-2xl font-semibold text-zinc-900 dark:text-white">${{ number_format($revenue, 2) }}</p>
         </div>
-
-        {{-- COLORS --}}
-        <div class="p-4 border border-black dark:border-white">
-            <p class="text-[10px] uppercase opacity-40">Total Colors</p>
-            <p class="text-2xl font-black">{{ $colorsTotal }}</p>
+        <div class="border border-black/15 dark:border-white/15 p-4">
+            <p class="text-xs text-zinc-500 mb-1">Paid Orders</p>
+            <p class="text-2xl font-semibold text-zinc-900 dark:text-white">{{ $orderCount }}</p>
         </div>
-
-        <div class="p-4 border border-black dark:border-white">
-            <p class="text-[10px] uppercase opacity-40">Live Colors</p>
-            <p class="text-2xl font-black text-emerald-500">{{ $colorsLive }}</p>
-        </div>
-
-        {{-- VARIANTS --}}
-        <div class="p-4 border border-black dark:border-white">
-            <p class="text-[10px] uppercase opacity-40">Variants</p>
-            <p class="text-2xl font-black">{{ $variantsTotal }}</p>
-        </div>
-
-        {{-- AVG COLORS --}}
-        <div class="p-4 border border-black dark:border-white col-span-2">
-            <p class="text-[10px] uppercase opacity-40">Avg Colors / Product</p>
-            <p class="text-2xl font-black">{{ $avgColorsPerProduct }}</p>
-        </div>
-
-        {{-- FAVORITES --}}
-        <div class="p-4 border border-black dark:border-white col-span-2">
-            <p class="text-[10px] uppercase opacity-40">Total Favorites</p>
-            <p class="text-2xl font-black text-pink-500">{{ $favoritesTotal }}</p>
-        </div>
-
-    </div>
-
-    {{-- BREAKDOWN --}}
-    <div class="grid md:grid-cols-3 gap-10">
-
-        {{-- PRODUCTS BY GENDER --}}
-        <div>
-            <h2 class="text-xs uppercase font-black tracking-widest mb-4">Products by Gender</h2>
-            @foreach(['male','female','unisex'] as $g)
-                <div class="flex justify-between border-b py-2 text-sm">
-                    <span class="uppercase">{{ $g }}</span>
-                    <span>{{ $productsByGender[$g] ?? 0 }}</span>
-                </div>
-            @endforeach
-        </div>
-
-        {{-- COLORS BY GENDER --}}
-        <div>
-            <h2 class="text-xs uppercase font-black tracking-widest mb-4">Colors by Gender</h2>
-            @foreach(['male','female','unisex'] as $g)
-                <div class="flex justify-between border-b py-2 text-sm">
-                    <span class="uppercase">{{ $g }}</span>
-                    <span>{{ $colorsByGender[$g] ?? 0 }}</span>
-                </div>
-            @endforeach
-        </div>
-
-        {{-- VARIANTS BY GENDER --}}
-        <div>
-            <h2 class="text-xs uppercase font-black tracking-widest mb-4">Variants by Gender</h2>
-            @foreach(['male','female','unisex'] as $g)
-                <div class="flex justify-between border-b py-2 text-sm">
-                    <span class="uppercase">{{ $g }}</span>
-                    <span>{{ $variantsByGender[$g] ?? 0 }}</span>
-                </div>
-            @endforeach
-        </div>
-
-    </div>
-
-    {{-- FAVORITES BY GENDER --}}
-    <div>
-        <h2 class="text-xs uppercase font-black tracking-widest mb-4">Favorites by Gender</h2>
-
-        <div class="grid md:grid-cols-3 gap-4">
-            @foreach(['male','female','unisex'] as $g)
-                <div class="p-4 border border-black dark:border-white text-center">
-                    <p class="text-[10px] uppercase opacity-40">{{ $g }}</p>
-                    <p class="text-xl font-black text-pink-500">
-                        {{ $favoritesByGender[$g] ?? 0 }}
-                    </p>
-                </div>
-            @endforeach
+        <div class="border border-black/15 dark:border-white/15 p-4">
+            <p class="text-xs text-zinc-500 mb-1">Units Sold</p>
+            <p class="text-2xl font-semibold text-zinc-900 dark:text-white">{{ $unitsSold }}</p>
         </div>
     </div>
+
+    {{-- TOP SELLERS --}}
+    <div class="space-y-3">
+        <p class="text-sm font-medium">Top Sellers</p>
+        <div class="border border-black/15 dark:border-white/15 divide-y divide-black/15 dark:divide-white/15">
+            @forelse($topSellers as $item)
+                <div class="flex items-center justify-between px-4 py-2.5 text-sm">
+                    <span class="font-medium">{{ $item->name }} <span class="text-zinc-500 font-normal">{{ $item->attr }}</span></span>
+                    <span class="text-zinc-500">{{ $item->units }} sold · ${{ number_format($item->revenue, 2) }}</span>
+                </div>
+            @empty
+                <div class="px-4 py-8 text-center text-sm text-zinc-500">Nothing sold yet.</div>
+            @endforelse
+        </div>
+    </div>
+
+    {{-- STOCK HEALTH --}}
+    <div class="space-y-3">
+        <p class="text-sm font-medium">Stock Health</p>
+        <div class="border border-black/15 dark:border-white/15 divide-y divide-black/15 dark:divide-white/15">
+            @forelse($lowStock as $variant)
+                <div class="flex items-center justify-between px-4 py-2.5 text-sm">
+                    <span class="text-zinc-600 dark:text-zinc-400">{{ $variant->product?->name }} · {{ $variant->color_name }} / {{ $variant->size }}</span>
+                    <span class="font-medium {{ $variant->stock_quantity <= 0 ? 'text-[#E31837]' : 'text-amber-600 dark:text-amber-400' }}">
+                        {{ $variant->stock_quantity <= 0 ? 'Out' : $variant->stock_quantity }}
+                    </span>
+                </div>
+            @empty
+                <div class="px-4 py-8 text-center text-sm text-zinc-500">Everything's stocked.</div>
+            @endforelse
+        </div>
+    </div>
+
+    {{-- CATALOG SIZE (footer context) --}}
+    <p class="text-xs text-zinc-500">{{ $products }} products in the studio · {{ $colorsLive }} colorways on the floor</p>
 
 </div>

@@ -2,11 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product; 
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Http\Request;
-
 class AdminController extends Controller
 {
     public function administrator()
@@ -18,17 +13,25 @@ class AdminController extends Controller
 
     public function merchandize()
    {
-       
+
     return view('Admin.merchandize');
    }
 
-       public function merchshow($id)
-   {
+    public function orders()
+    {
+        return view('Admin.orders');
+    }
 
-     $products = Product::findorfail($id);
-       
-    return view('Admin.merchandize_show',  compact('products'));
-   }
+    public function team()
+    {
+        abort_unless(auth()->user()->isAdmin(), 403);
 
+        return view('Admin.team');
+    }
+
+    public function reports()
+    {
+        return view('Admin.reports');
+    }
 
 }
