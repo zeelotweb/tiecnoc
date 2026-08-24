@@ -32,7 +32,7 @@
 
                 @if(auth()->user()->isAdmin())
                     <flux:sidebar.group :heading="__('Staff Management')" class="grid [&_[data-flux-heading]]:text-[9px] [&_[data-flux-heading]]:font-bold [&_[data-flux-heading]]:uppercase [&_[data-flux-heading]]:tracking-[0.2em] [&_[data-flux-heading]]:opacity-40">
-                        <flux:sidebar.item icon="user-group" :href="route('admin.team')" :current="request()->routeIs('admin.team')" wire:navigate class="uppercase text-xs tracking-widest font-medium">Team</flux:sidebar.item>
+                        <flux:sidebar.item icon="user-group" :href="route('admin.team')" :current="request()->routeIs('admin.team')" wire:navigate class="uppercase text-xs tracking-widest font-medium">Crew</flux:sidebar.item>
                     </flux:sidebar.group>
                 @endif
             </flux:sidebar.nav>
