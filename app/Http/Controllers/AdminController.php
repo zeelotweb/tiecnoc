@@ -34,4 +34,18 @@ class AdminController extends Controller
         return view('Admin.reports');
     }
 
+    public function partners()
+    {
+        abort_unless(auth()->user()->isAdmin(), 403);
+
+        return view('Admin.partners');
+    }
+
+    public function vendors()
+    {
+        abort_unless(auth()->user()->isAdmin(), 403);
+
+        return view('Admin.vendors');
+    }
+
 }

@@ -121,25 +121,6 @@ protected static function booted()
 
     /*
     |--------------------------------------------------------------------------
-    | TOOL PERMISSIONS
-    |--------------------------------------------------------------------------
-    */
-    public function tools()
-    {
-        return $this->hasMany(UserToolPermission::class);
-    }
-
-    public function hasTool(string $tool): bool
-    {
-        if ($this->isSuperAdmin() || $this->isAdmin()) {
-            return true;
-        }
-
-        return $this->tools()->where('tool', $tool)->exists();
-    }
-
-    /*
-    |--------------------------------------------------------------------------
     | USER UTILITY
     |--------------------------------------------------------------------------
     */

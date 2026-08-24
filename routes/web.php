@@ -76,6 +76,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/orders', [AdminController::class, 'orders'])->name('admin.orders');
     Route::get('/reports', [AdminController::class, 'reports'])->name('admin.reports');
     Route::get('/team', [AdminController::class, 'team'])->name('admin.team');
+    Route::get('/partners', [AdminController::class, 'partners'])->name('admin.partners');
+    Route::get('/vendors', [AdminController::class, 'vendors'])->name('admin.vendors');
 
     Route::post('/upload/chunk', [ChunkUploadController::class, 'upload']);
     Route::post('/upload/complete', [ChunkUploadController::class, 'complete']);

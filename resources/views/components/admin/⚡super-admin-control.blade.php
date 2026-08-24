@@ -19,7 +19,7 @@ new class extends Component {
         // 🔒 Only super admin can access this component
         abort_unless(app(UserAccessService::class)->isSuperAdmin($user), 403);
 
-        $this->users = User::with('tools')->latest()->get();
+        $this->users = User::latest()->get();
     }
 
     /*
@@ -41,7 +41,7 @@ new class extends Component {
 
         $this->dispatch('notify', message: 'ROLE UPDATED', type: 'success');
 
-        $this->users = User::with('tools')->latest()->get();
+        $this->users = User::latest()->get();
     }
 
 };

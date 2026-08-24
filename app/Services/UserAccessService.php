@@ -16,11 +16,6 @@ class UserAccessService
         return $this->isSuperAdmin($user);
     }
 
-    public function canManageTools(User $user): bool
-    {
-        return in_array($user->role, ['admin', 'super_admin']) || $user->id === 1;
-    }
-
     public function canAccessAdmin(User $user): bool
     {
         return in_array($user->role, ['staff', 'admin', 'super_admin']) || $user->id === 1;

@@ -31,6 +31,11 @@
                 </flux:sidebar.group>
 
                 @if(auth()->user()->isAdmin())
+                    <flux:sidebar.group :heading="__('Network')" class="grid [&_[data-flux-heading]]:text-[9px] [&_[data-flux-heading]]:font-bold [&_[data-flux-heading]]:uppercase [&_[data-flux-heading]]:tracking-[0.2em] [&_[data-flux-heading]]:opacity-40">
+                        <flux:sidebar.item icon="building-storefront" :href="route('admin.partners')" :current="request()->routeIs('admin.partners')" wire:navigate class="uppercase text-xs tracking-widest font-medium">Partners</flux:sidebar.item>
+                        <flux:sidebar.item icon="truck" :href="route('admin.vendors')" :current="request()->routeIs('admin.vendors')" wire:navigate class="uppercase text-xs tracking-widest font-medium">Vendors</flux:sidebar.item>
+                    </flux:sidebar.group>
+
                     <flux:sidebar.group :heading="__('Staff Management')" class="grid [&_[data-flux-heading]]:text-[9px] [&_[data-flux-heading]]:font-bold [&_[data-flux-heading]]:uppercase [&_[data-flux-heading]]:tracking-[0.2em] [&_[data-flux-heading]]:opacity-40">
                         <flux:sidebar.item icon="user-group" :href="route('admin.team')" :current="request()->routeIs('admin.team')" wire:navigate class="uppercase text-xs tracking-widest font-medium">Crew</flux:sidebar.item>
                     </flux:sidebar.group>
