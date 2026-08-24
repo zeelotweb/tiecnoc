@@ -89,10 +89,18 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 
 
 
+/*
+|--------------------------------------------------------------------------
+| Terms, Privacy, Misc: Open to everyone (Guest logic handled in Controller)
+|--------------------------------------------------------------------------
+*/
 
 
 
-
+    Route::post('/terms', [ChunkUploadController::class, 'terms'])->name('terms');
+    Route::post('privacy', [ChunkUploadController::class, 'privacy'])->name('privacy');
+    Route::delete('pertner', [ChunkUploadController::class, 'partner'])->name('partner');
+    Route::delete('contractor', [ChunkUploadController::class, 'contractor'])->name('contractor');
 
 /*
 |--------------------------------------------------------------------------

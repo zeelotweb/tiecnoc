@@ -1,4 +1,7 @@
 
+ Ity7QUP05Hm1e6pgB4
+
+
 REMOVE ALL EXISTING 
 
 sudo rm -rf /var/www/taongaf.com /var/www/taongaf /etc/nginx/sites-available/taongaf.com /etc/nginx/sites-available/taongaf /etc/nginx/sites-enabled/taongaf.com /etc/nginx/sites-enabled/taongaf

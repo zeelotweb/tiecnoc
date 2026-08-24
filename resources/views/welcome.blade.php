@@ -96,6 +96,7 @@
             </div>
         </div>
     </div>
-</x-modal>
 
+</x-modal>
+ 
 </html>

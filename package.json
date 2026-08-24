@@ -28,6 +28,8 @@
         "lightningcss-linux-x64-gnu": "^1.29.1"
     },
     "devDependencies": {
-        "chokidar": "^5.0.0"
+        "chokidar": "^5.0.0",
+        "laravel-echo": "^2.4.0",
+        "pusher-js": "^8.6.0"
     }
 }
