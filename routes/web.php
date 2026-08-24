@@ -7,7 +7,6 @@ use App\Http\Controllers\ChunkUploadController;
 
 use App\Http\Controllers\Pay\CheckoutController;
 use App\Http\Controllers\Pay\StripeWebhookController;
-use App\Http\Controllers\Pay\MerchController;
 use App\Http\Middleware\EnsureUserIsAdmin;
 
 
@@ -25,23 +24,17 @@ Route::view('/', 'dashboard')->name('home');
 Route::get('/merch/{id}', [PlatformController::class, 'displaymerch'])
     ->name('merchandise.show');
 Route::view('dashboard', 'dashboard')->name('dashboard');
-Route::get('/Merchandise', [PlatformController::class, 'merchall'])->name('store.all');
 
 /**
  * Catalogue: Open to everyone for browsing
  */
 Route::prefix('catalogue')->name('store.')->group(function () {
+    Route::get('/all', [PlatformController::class, 'merchall'])->name('all');
     Route::get('/male', [PlatformController::class, 'male'])->name('male');
     Route::get('/female', [PlatformController::class, 'female'])->name('female');
-    Route::get('/sale', [PlatformController::class, 'sale'])->name('sale');
     Route::get('/unisex', [PlatformController::class, 'unisex'])->name('unisex');
-//    Route::get('/all', [PlatformController::class, 'all'])->name('all');
-    Route::get('/all', [PlatformController::class, 'all'])->name('catalogue');
-
-    Route::get('/pulse', [PlatformController::class, 'pulse'])->name('pulse');
+    Route::get('/sale', [PlatformController::class, 'sale'])->name('sale');
 });
-
-
 
 /*
 |--------------------------------------------------------------------------
@@ -49,13 +42,7 @@ Route::prefix('catalogue')->name('store.')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'verified'])->group(function () {
-    
-    // Future auth-only routes like 'cart', 'favorites', or 'settings' go here
-
-    Route::get('/favorites', function () {
-    return view('platform.wishlist');
-})->name('store.favorites');
-
+    Route::get('/favorites', [PlatformController::class, 'favorites'])->name('store.favorites');
 });
 
 
@@ -109,7 +96,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 */
 
 
-Route::get('/selection', [MerchController::class, 'cart'])->name('store.cart');
+Route::get('/cart', [PlatformController::class, 'cart'])->name('store.cart');
 Route::post('/checkout', CheckoutController::class)->name('checkout');
 
 Route::get('/checkout/success', function (Request $request) {
@@ -120,6 +107,9 @@ Route::get('/checkout/success', function (Request $request) {
 })->name('checkout.success');
 
 Route::view('/checkout/cancel', 'checkout.cancel')->name('checkout.cancel');
+
+Route::get('/orders/{orderNumber}/manifest', [PlatformController::class, 'orderManifestDownload'])
+    ->name('order.manifest.download');
 
 /**
  * Stripe Webhook (No Auth / No CSRF)

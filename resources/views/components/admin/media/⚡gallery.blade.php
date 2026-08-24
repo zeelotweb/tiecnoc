@@ -32,6 +32,14 @@ new class extends Component {
         $this->product = Product::find($this->product_id);
     }
 
+    // Uploads happen in the sibling admin.tools.gallery component — this
+    // just needs to exist so Livewire re-renders and pulls the grid fresh.
+    #[On('media-added')]
+    public function refreshGallery()
+    {
+        //
+    }
+
     /*
     |--------------------------------------------------------------------------
     | DELETE MEDIA
@@ -40,7 +48,7 @@ new class extends Component {
     public function delete($id)
     {
         Media::where('id', $id)
-            ->where('mediable_type', Product::class)
+            ->where('mediable_type', 'product')
             ->delete();
 
         $this->dispatch('notify', message: 'MEDIA REMOVED');

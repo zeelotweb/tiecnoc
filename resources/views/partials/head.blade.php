@@ -34,23 +34,6 @@ document.addEventListener('alpine:init', () => {
 
 
 
-{{-- Load FilePond and your app.js --}}
-@push('styles')
-<link href="https://unpkg.com/filepond/dist/filepond.min.css" rel="stylesheet">
-<link href="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.min.css" rel="stylesheet">
-@endpush
-
-@push('scripts')
-<script src="https://unpkg.com/filepond/dist/filepond.min.js"></script>
-<script src="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.min.js"></script>
-
-{{-- Your new app.js will handle FilePond initialization automatically --}}
-
-@endpush
-
-
-
-
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 @fluxAppearance
 

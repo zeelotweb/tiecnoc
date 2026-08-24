@@ -18,7 +18,7 @@ class ActivityService
 
         return Order::where('user_id', auth()->id())
             ->where('status', 'paid')
-            ->whereHas('items', function ($query) use ($product) {
+            ->whereHas('items.variant.color', function ($query) use ($product) {
                 $query->where('product_id', $product->id);
             })
             ->exists();
@@ -34,10 +34,12 @@ class ActivityService
 
         return auth()->user()->orders()
             ->where('status', 'paid')
-            ->with('items')
+            ->with('items.variant.color')
             ->get()
-            ->pluck('items.*.product_id')
+            ->pluck('items')
             ->flatten()
+            ->pluck('variant.color.product_id')
+            ->filter()
             ->unique();
     }
 }

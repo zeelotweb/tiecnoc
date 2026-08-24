@@ -19,6 +19,17 @@ FilePond.registerPlugin(
 
 window.FilePond = FilePond;
 
+// Opens a Flux modal via a native onclick instead of x-on:click. Some
+// server-rendered slots (e.g. page-header actions outside any Livewire
+// component boundary) can lose the Alpine/Livewire hydration race on first
+// paint, so x-on:click never binds there. A native onclick always fires
+// regardless of that race; Alpine.evaluate() then runs the same expression
+// against Alpine's public API, which works on any node once Alpine has
+// booted (always true by the time a user can click).
+window.openFluxModal = function (name) {
+    window.Alpine.evaluate(document.body, `$flux.modal('${name}').show()`);
+};
+
 
 
 

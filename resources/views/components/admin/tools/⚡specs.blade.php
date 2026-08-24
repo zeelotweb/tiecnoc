@@ -62,6 +62,19 @@ new class extends Component {
 
     /*
     |--------------------------------------------------------------------------
+    | REFRESH (colorways changed in another tool tab — Livewire tabs don't
+    | share state, so this just needs to exist to trigger a re-render and
+    | pull $this->colors fresh)
+    |--------------------------------------------------------------------------
+    */
+    #[On('colorway-updated')]
+    public function refreshColors()
+    {
+        //
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | SELECT COLOR
     |--------------------------------------------------------------------------
     */

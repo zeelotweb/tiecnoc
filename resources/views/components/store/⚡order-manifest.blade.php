@@ -34,7 +34,7 @@ new class extends Component {
                 
                 {{-- PDF EXPORT TRIGGER --}}
                 <flux:button 
-                    href="{{ route('admin.order.manifest.download', $this->order->order_number) }}" 
+                    href="{{ route('order.manifest.download', $this->order->order_number) }}" 
                     variant="subtle" 
                     icon="document-arrow-down" 
                     class="uppercase font-black text-[8px] border border-black dark:border-white rounded-none h-10 px-4"

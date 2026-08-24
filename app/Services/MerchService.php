@@ -112,13 +112,15 @@ class MerchService
     | CATALOGUE
     |--------------------------------------------------------------------------
     */
-    public function getCatalogueByGender($perPage, $gender = 'all')
+    public function getCatalogueByGender($perPage, $gender = 'all', bool $onSale = false)
     {
         return Product::whereHas('colors', function ($q) {
                 $q->where('status', 'live');
             })
-            ->select('id', 'name', 'slug', 'base_price', 'description', 'gender')
+            ->select('id', 'name', 'slug', 'base_price', 'compare_at_price', 'description', 'gender')
             ->when($gender !== 'all', fn ($query) => $query->where('gender', $gender))
+            ->when($onSale, fn ($query) => $query->whereNotNull('compare_at_price')
+                ->whereColumn('compare_at_price', '>', 'base_price'))
             ->with($this->baseRelations())
             ->paginate($perPage);
     }
@@ -140,6 +142,7 @@ class MerchService
                 'color'   => null,
                 'variant' => null,
                 'price'   => $product->base_price,
+                'compareAtPrice' => $product->compare_at_price ?? null,
                 'image'   => null,
                 'back'    => null,
             ];
@@ -153,6 +156,7 @@ class MerchService
             'color'   => $color,
             'variant' => $variant,
             'price'   => $variant?->price ?? $product->base_price,
+            'compareAtPrice' => $product->compare_at_price ?? null,
             'image'   => $color->front_image_path,
             'back'    => $color->back_image_path,
         ];

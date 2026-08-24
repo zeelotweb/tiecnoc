@@ -3,9 +3,11 @@
     <x-slot:pageTitle>{{ __('The Line') }}</x-slot:pageTitle>
     <x-slot:pageActions>
         @if(auth()->user()->isAdmin())
-            <flux:button x-on:click="$flux.modal('add-product-modal').show()" icon="plus" variant="primary">
-                Add Product
-            </flux:button>
+            <div onclick="openFluxModal('add-product-modal')" class="inline-flex">
+                <flux:button icon="plus" variant="primary">
+                    Add Product
+                </flux:button>
+            </div>
         @endif
     </x-slot:pageActions>
 

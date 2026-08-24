@@ -51,124 +51,101 @@ new class extends Component {
 };
 ?>
 
-<div class="p-8 lg:p-24 max-w-7xl mx-auto space-y-16">
+<div class="bg-white text-black min-h-screen">
+    <div class="max-w-7xl mx-auto px-4 lg:px-8 py-10 space-y-10">
 
-    <header class="border-b border-black dark:border-white pb-8">
-        <flux:heading size="xl" class="uppercase font-black tracking-tighter italic">
-            Your Selection / Archive
-        </flux:heading>
-    </header>
-
-    @if($items->isEmpty())
-
-        <div class="py-40 text-center opacity-20 uppercase tracking-[0.6em] text-[10px] font-black italic">
-            Selection is currently empty.
+        <div class="border-b border-black pb-6">
+            <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-[#E31837] mb-2">Selection</p>
+            <h1 class="text-3xl md:text-4xl font-black tracking-tight leading-none">Bag</h1>
         </div>
 
-    @else
+        @if($items->isEmpty())
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-20">
+            <div class="py-24 text-center text-sm text-zinc-500 border border-dashed border-zinc-300">
+                Your bag is empty.
+            </div>
 
-            {{-- ITEMS --}}
-            <div class="lg:col-span-2 space-y-12">
+        @else
 
-                @foreach($items as $item)
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-16">
 
-                    <div class="flex gap-8 border-b pb-12 group">
+                {{-- ITEMS --}}
+                <div class="lg:col-span-2 divide-y divide-black/10">
 
-                        {{-- IMAGE --}}
-                        <div class="w-28 aspect-[3/4] relative overflow-hidden bg-zinc-50 dark:bg-zinc-950 border">
+                    @foreach($items as $item)
 
-                            @if($item->image)
-                                <img src="{{ asset('storage/' . $item->image) }}"
-                                     class="absolute inset-0 w-full h-full object-cover">
-                            @endif
+                        <div class="flex gap-6 py-8 first:pt-0">
 
-                        </div>
+                            {{-- IMAGE --}}
+                            <div class="w-28 aspect-[3/4] relative overflow-hidden bg-zinc-50 border border-black shrink-0">
+                                @if($item->image)
+                                    <img src="{{ asset('storage/' . $item->image) }}"
+                                         class="absolute inset-0 w-full h-full object-cover">
+                                @endif
+                            </div>
 
-                        {{-- INFO --}}
-                        <div class="flex-1 space-y-2">
+                            {{-- INFO --}}
+                            <div class="flex-1 space-y-3">
 
-                            <div class="flex justify-between items-start">
+                                <div class="flex justify-between items-start">
+                                    <p class="font-medium text-sm">{{ $item->name }}</p>
+                                    <flux:button
+                                        variant="ghost"
+                                        icon="x-mark"
+                                        wire:click="removeItem({{ $item->id }})"
+                                        size="xs"
+                                    />
+                                </div>
 
-                                <h4 class="uppercase font-black text-sm tracking-tighter italic">
-                                    {{ $item->name }}
-                                </h4>
+                                <p class="text-xs text-zinc-500">{{ $item->attr }}</p>
 
-                                <flux:button
-                                    variant="subtle"
-                                    icon="x-mark"
-                                    wire:click="removeItem({{ $item->id }})"
-                                    size="xs"
+                                <div class="pt-4 flex justify-between items-end">
+                                    <span class="text-sm text-zinc-500">Qty {{ $item->qty }}</span>
+                                    <span class="text-sm font-medium">${{ number_format($item->price * $item->qty, 2) }}</span>
+                                </div>
+
+                                <livewire:platform.reaction_button
+                                    :variantId="$item->product_variant_id"
                                 />
-
                             </div>
-
-                            <p class="text-[9px] uppercase tracking-widest font-black opacity-40 italic">
-                                {{ $item->attr }}
-                            </p>
-
-                            <div class="pt-6 flex justify-between items-end">
-
-                                <span class="text-[10px] uppercase font-black tracking-widest">
-                                    Qty: {{ $item->qty }}
-                                </span>
-
-                                <span class="font-mono text-sm font-black italic">
-                                    ${{ number_format($item->price * $item->qty, 2) }}
-                                </span>
-
-                            </div>
-
-                            <livewire:platform.reaction_button
-                                :variantId="$item->product_variant_id"
-                            />
 
                         </div>
 
-                    </div>
-
-                @endforeach
-
-            </div>
-
-            {{-- SUMMARY --}}
-            <div class="p-10 border border-black dark:border-white space-y-10 h-fit">
-
-                <div class="border-b pb-4 uppercase text-[10px] font-black tracking-[0.4em] italic">
-                    Order Logic
-                </div>
-
-                <div class="space-y-4">
-
-                    <div class="flex justify-between text-[10px] uppercase font-black italic">
-                        <span class="opacity-40">Subtotal</span>
-                        <span class="font-mono">${{ number_format($total, 2) }}</span>
-                    </div>
-
-                    <div class="flex justify-between text-[10px] uppercase font-black italic">
-                        <span class="opacity-40">Shipping</span>
-                        <span>Calculated at checkout</span>
-                    </div>
+                    @endforeach
 
                 </div>
 
-                <form action="{{ route('checkout') }}" method="POST" class="pt-6 border-t">
-                    @csrf
+                {{-- SUMMARY --}}
+                <div class="p-6 border border-black space-y-6 h-fit">
 
-                    <button
-                        type="submit"
-                        class="w-full h-16 uppercase font-black tracking-[0.4em] text-[10px]
-                        bg-black text-white dark:bg-white dark:text-black hover:bg-[#E31837] transition">
-                        Initialize Payment →
-                    </button>
+                    <p class="text-sm font-medium border-b border-black pb-4">Order Summary</p>
 
-                </form>
+                    <div class="space-y-3">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-zinc-500">Subtotal</span>
+                            <span>${{ number_format($total, 2) }}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-zinc-500">Shipping</span>
+                            <span class="text-zinc-500">Calculated at checkout</span>
+                        </div>
+                    </div>
+
+                    <form action="{{ route('checkout') }}" method="POST" class="pt-4 border-t border-black">
+                        @csrf
+                        <button
+                            type="submit"
+                            class="w-full h-14 text-[11px] font-bold uppercase tracking-[0.2em]
+                            bg-black text-white hover:bg-[#E31837] transition-colors">
+                            Checkout
+                        </button>
+                    </form>
+
+                </div>
 
             </div>
 
-        </div>
+        @endif
 
-    @endif
-
+    </div>
 </div>

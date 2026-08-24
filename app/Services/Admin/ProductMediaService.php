@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Laravel\Facades\Image;
+use Intervention\Image\Encoders\JpegEncoder;
 
 class ProductMediaService
 {
@@ -72,7 +73,7 @@ class ProductMediaService
 
                     try {
 
-                        $img = Image::read($absPath);
+                        $img = Image::decodePath($absPath);
 
                         // Thumbnail
                         $thumb = clone $img;
@@ -80,7 +81,7 @@ class ProductMediaService
 
                         Storage::disk('public')->put(
                             $thumbPath,
-                            $thumb->toJpeg(70)
+                            (string) $thumb->encode(new JpegEncoder(quality: 70))
                         );
 
                         $thumbnailUrl = $thumbPath;

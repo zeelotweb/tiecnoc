@@ -1,123 +1,133 @@
 <?php
 
 use Livewire\Component;
-use Livewire\WithPagination;
 use App\Services\MerchService;
+use Illuminate\Support\Str;
 
 new class extends Component {
-    use WithPagination;
 
-    public $gender;
-    public $perPage = 10;
+    public $gender = 'all';
+    public $onSale = false;
+    public $perPage = 16;
 
-    public function mount($gender = 'all')
+    public function mount($gender = 'all', $onSale = false)
     {
         $this->gender = $gender;
+        $this->onSale = $onSale;
+    }
+
+    public function loadMore()
+    {
+        $this->perPage += 16;
     }
 
     public function with(MerchService $service)
     {
         return [
-            'discoveryFeed' => $service->getCatalogueByGender($this->perPage, $this->gender),
+            'discoveryFeed' => $service->getCatalogueByGender($this->perPage, $this->gender, $this->onSale),
         ];
+    }
+
+    public function getHeadingProperty(): string
+    {
+        if ($this->onSale) return 'Sale';
+
+        return match ($this->gender) {
+            'male' => 'Men',
+            'female' => 'Women',
+            'unisex' => 'Unisex',
+            default => 'All',
+        };
     }
 };
 ?>
 
-<div class="min-h-screen bg-white font-sans text-[#00174F]">
+<div class="bg-white text-black min-h-screen">
 
     {{-- HEADER --}}
-    <nav class="sticky top-0 flex items-center justify-between border-b-2 border-[#00174F] bg-white px-2 py-4 z-5">
-        <div class="text-[10px] font-bold uppercase tracking-[0.3em] md:block">
-            {{ $gender === 'all' ? 'All Collections' : $gender . ' Collection' }}
-        </div>
-    </nav>
+    <div class="max-w-7xl mx-auto px-4 lg:px-8 pt-10 pb-6 border-b border-black">
+        <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-[#E31837] mb-2">Catalogue</p>
+        <h1 class="text-3xl md:text-4xl font-black tracking-tight leading-none">{{ $this->heading }}</h1>
+        <p class="text-sm text-zinc-500 mt-3">{{ $discoveryFeed->total() }} {{ Str::plural('piece', $discoveryFeed->total()) }}</p>
+    </div>
 
     {{-- GRID --}}
-    <main class="p-2">
-        <div class="grid grid-cols-1 gap-px md:grid-cols-5">
+    <div class="max-w-7xl mx-auto px-2 lg:px-8 py-8">
+        @if($discoveryFeed->count())
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-10">
+                @foreach($discoveryFeed as $product)
+                    @php
+                        $display = app(MerchService::class)->getDisplayData($product);
+                        $variant = $display['variant'];
+                        $front   = $display['image'];
+                        $back    = $display['back'];
+                        $price   = $display['price'];
+                        $compareAtPrice = $display['compareAtPrice'];
+                        $isOnSale = $compareAtPrice && $compareAtPrice > $price;
+                    @endphp
 
-            @foreach($discoveryFeed as $product)
-
-                @php
-                    $display = app(\App\Services\MerchService::class)->getDisplayData($product);
-
-                    $color   = $display['color'];
-                    $variant = $display['variant'];
-                    $front   = $display['image']; // string
-                    $back    = $display['back'];  // string
-                    $price   = $display['price'];
-                @endphp
-
-                <div class="group relative flex flex-col bg-white z-1">
-
-                    {{-- IMAGE --}}
-                    <div class="relative aspect-[2/3] cursor-pointer overflow-hidden border border-black">
-
-                        <a href="/merch/{{ $product->slug }}">
-
-                            @if($front)
-                                <img src="{{ asset('storage/' . $front) }}" 
-                                     class="absolute inset-0 h-full w-full object-cover transition-opacity duration-500 {{ $back ? 'group-hover:opacity-0 group-active:opacity-0' : '' }}"
-                                     alt="{{ $product->name }}">
-                            @endif
-
-                            @if($back)
-                                <img src="{{ asset('storage/' . $back) }}" 
-                                     class="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100 group-active:opacity-100"
-                                     alt="{{ $product->name }} Detail">
-                            @endif
-
-                        </a>
-
-                        {{-- GENDER --}}
-                        <div class="absolute left-0 top-0 bg-[#00174F] px-2 py-1 text-[8px] font-black uppercase italic text-white shadow-md">
-                            {{ $product->gender }}
-                        </div>
-
-                        {{-- REACTION --}}
-                        @if($variant)
-                            <div class="absolute top-2 right-2 z-5 bg-white/80 backdrop-blur p-1 rounded">
-
-                                <livewire:platform.reaction_button 
-                                    :variantId="$variant->id"
-                                    type="favorite"
-                                    :key="'grid-reaction-'.$variant->id" 
-                                />
-
-                            </div>
-                        @endif
-
-                    </div>
-
-                    {{-- INFO --}}
-                    <div class="p-2">
-                        <h2 class="mb-1 text-xs font-black uppercase italic leading-tight tracking-tighter">
-                            {{ $product->name }}
-                        </h2>
-
-                        <div class="flex items-center justify-between border-t border-[#00174F] pt-1">
-                            <span class="text-sm font-black">
-                                ${{ number_format((float) $price, 2) }}
-                            </span>
-
-                            <a href="/merch/{{ $product->slug }}" 
-                               class="border-b-2 border-[#E31837] text-[9px] font-black uppercase italic transition-colors hover:text-[#E31837]">
-                                View Full
+                    <div class="group">
+                        {{-- IMAGE --}}
+                        <div class="relative aspect-[3/4] bg-zinc-50 border border-black overflow-hidden">
+                            <a href="/merch/{{ $product->slug }}">
+                                @if($front)
+                                    <img src="{{ asset('storage/' . $front) }}"
+                                         class="absolute inset-0 w-full h-full object-cover transition-opacity duration-500 {{ $back ? 'group-hover:opacity-0' : '' }}"
+                                         alt="{{ $product->name }}">
+                                @endif
+                                @if($back)
+                                    <img src="{{ asset('storage/' . $back) }}"
+                                         class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+                                         alt="{{ $product->name }} detail">
+                                @endif
                             </a>
+
+                            @if($isOnSale)
+                                <div class="absolute top-0 left-0 bg-[#E31837] text-white px-2 py-1 text-[9px] font-bold uppercase tracking-widest">
+                                    Sale
+                                </div>
+                            @endif
+
+                            @if($variant)
+                                <div class="absolute top-2 right-2 bg-white/80 backdrop-blur p-1">
+                                    <livewire:platform.reaction_button
+                                        :variantId="$variant->id"
+                                        type="favorite"
+                                        :key="'grid-reaction-'.$variant->id"
+                                    />
+                                </div>
+                            @endif
+                        </div>
+
+                        {{-- INFO --}}
+                        <div class="pt-2">
+                            <p class="text-sm font-medium truncate">{{ $product->name }}</p>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="text-sm {{ $isOnSale ? 'text-[#E31837] font-medium' : '' }}">
+                                    ${{ number_format((float) $price, 2) }}
+                                </span>
+                                @if($isOnSale)
+                                    <span class="text-sm text-zinc-400 line-through">${{ number_format((float) $compareAtPrice, 2) }}</span>
+                                @endif
+                            </div>
                         </div>
                     </div>
+                @endforeach
+            </div>
 
+            {{-- INFINITE SCROLL --}}
+            @if($discoveryFeed->hasMorePages())
+                <div x-intersect="$wire.loadMore()" class="flex items-center justify-center pt-14 pb-4">
+                    <div wire:loading wire:target="loadMore" class="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400">
+                        Loading more&hellip;
+                    </div>
                 </div>
-
-            @endforeach
-
-        </div>
-
-        <div class="mt-4">
-            {{-- pagination later --}}
-        </div>
-
-    </main>
+            @endif
+        @else
+            <div class="text-center py-24 text-sm text-zinc-500 border border-dashed border-zinc-300">
+                Nothing here yet.
+            </div>
+        @endif
+    </div>
 
 </div>

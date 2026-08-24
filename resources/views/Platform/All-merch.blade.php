@@ -1,5 +1,5 @@
-<x-layouts::app :title="__('Merchandize')">
+<x-layouts::app :title="__('All Merchandise')">
 
-    <livewire:platform.all-merch gender="all"  />
+    <livewire:platform.all-merch gender="all" />
 
 </x-layouts::app>

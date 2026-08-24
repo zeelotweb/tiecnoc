@@ -28,7 +28,7 @@ new class extends Component {
 
         Product::create([
             'name'             => $this->name,
-            'slug'             => Str::slug($this->name),
+            'slug'             => $this->uniqueSlug(Str::slug($this->name)),
             'gender'           => $this->gender,
             'base_price'       => (float) $this->base_price,
             'compare_at_price' => $this->compare_at_price ? (float) $this->compare_at_price : null,
@@ -44,6 +44,23 @@ new class extends Component {
         $this->dispatch('product-created');
         $this->dispatch('notify', message: 'PRODUCT CREATED', type: 'success');
         $this->js('$flux.modal("add-product-modal").close()');
+    }
+
+    // Names that normalize to the same slug (e.g. differing only in
+    // capitalization) would otherwise crash on the unique constraint —
+    // dedupe with a numeric suffix instead, same convention as most
+    // e-commerce admins.
+    protected function uniqueSlug(string $base): string
+    {
+        $slug = $base;
+        $suffix = 2;
+
+        while (Product::withTrashed()->where('slug', $slug)->exists()) {
+            $slug = "{$base}-{$suffix}";
+            $suffix++;
+        }
+
+        return $slug;
     }
 
     public function addCategory()

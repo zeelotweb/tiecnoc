@@ -33,6 +33,7 @@
                     <flux:sidebar.item icon="user-plus" :href="route('store.female')" :current="request()->routeIs('store.female')" wire:navigate> Women </flux:sidebar.item>
                     <flux:sidebar.item icon="user" :href="route('store.male')" :current="request()->routeIs('store.male')" wire:navigate> Men </flux:sidebar.item>
                     <flux:sidebar.item icon="users" :href="route('store.unisex')" :current="request()->routeIs('store.unisex')" wire:navigate> Unisex </flux:sidebar.item>
+                    <flux:sidebar.item icon="tag" :href="route('store.sale')" :current="request()->routeIs('store.sale')" wire:navigate> Sale </flux:sidebar.item>
                 </flux:sidebar.group>
             </flux:sidebar.nav>
         </div>

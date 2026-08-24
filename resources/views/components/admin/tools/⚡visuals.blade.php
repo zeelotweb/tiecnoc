@@ -48,6 +48,8 @@ new class extends Component {
         );
 
         $this->dispatch('notify', message: 'ASSETS SYNCED');
+        $this->dispatch('colorway-updated');
+        $this->dispatch('matrix-updated');
 
         $this->reset(['front_path', 'back_path']);
         $this->dispatch('reset-ponds');
@@ -104,9 +106,32 @@ new class extends Component {
                 : null,
 
             'colors' => $this->product_id
-                ? \App\Models\ProductColor::where('product_id', $this->product_id)->get()
+                ? \App\Models\ProductColor::where('product_id', $this->product_id)->withCount('variants')->get()
                 : collect(),
         ];
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | GO LIVE / TAKE OFFLINE
+    |--------------------------------------------------------------------------
+    */
+    public function toggleLive($colorId, ProductContextService $service)
+    {
+        $color = $service->getColor($this->product_id, $colorId);
+
+        if (! $color) return;
+
+        if ($color->status !== 'live' && ! $service->canToggleColor($color)) {
+            $this->dispatch('notify', message: 'ADD AN IMAGE AND A SIZE FIRST', type: 'error');
+            return;
+        }
+
+        $service->toggleColorStatus($color);
+
+        $this->dispatch('notify', message: $color->status === 'live' ? 'COLORWAY IS LIVE' : 'COLORWAY TAKEN OFFLINE');
+        $this->dispatch('colorway-updated');
+        $this->dispatch('matrix-updated');
     }
 };
 
@@ -179,11 +204,29 @@ new class extends Component {
 
             <div class="flex flex-col gap-2">
                 @forelse($colors as $color)
-                    <div class="flex items-center gap-3">
-                        <div class="w-5 h-5 rounded border border-zinc-300 dark:border-zinc-700"
-                             style="background-color: {{ $color->hex_code }}">
+                    @php $ready = !empty($color->front_image_path) && $color->variants_count > 0; @endphp
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-5 h-5 rounded border border-zinc-300 dark:border-zinc-700"
+                                 style="background-color: {{ $color->hex_code }}">
+                            </div>
+                            <span class="text-sm">{{ $color->color_name }}</span>
                         </div>
-                        <span class="text-sm">{{ $color->color_name }}</span>
+
+                        <div class="flex items-center gap-3">
+                            <flux:badge :color="$color->status === 'live' ? 'emerald' : 'zinc'" size="sm">
+                                {{ ucfirst($color->status ?? 'draft') }}
+                            </flux:badge>
+
+                            <flux:button
+                                wire:click="toggleLive({{ $color->id }})"
+                                size="sm"
+                                variant="{{ $color->status === 'live' ? 'ghost' : 'primary' }}"
+                                :disabled="$color->status !== 'live' && !$ready"
+                            >
+                                {{ $color->status === 'live' ? 'Take Offline' : 'Go Live' }}
+                            </flux:button>
+                        </div>
                     </div>
                 @empty
                     <p class="text-sm text-zinc-500">No colorways yet.</p>

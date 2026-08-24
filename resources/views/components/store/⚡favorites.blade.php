@@ -36,116 +36,85 @@ new class extends Component {
 };
 ?>
 
-<div class="p-8 lg:p-24 max-w-7xl mx-auto space-y-16 animate-in fade-in duration-700">
+<div class="bg-white text-black min-h-screen">
+    <div class="max-w-7xl mx-auto px-4 lg:px-8 py-10 space-y-10">
 
-    {{-- HEADER --}}
-    <header class="border-b border-black dark:border-white pb-8">
-        <flux:heading size="xl" class="uppercase font-black tracking-tighter italic">
-            Your Favorites
-        </flux:heading>
-
-        <p class="text-[9px] uppercase tracking-[0.5em] opacity-40 mt-2 font-black">
-            Saved Selections
-        </p>
-    </header>
-
-    @if($items->isEmpty())
-        <div class="py-40 text-center opacity-20 uppercase tracking-[0.6em] text-[10px] font-black italic">
-            No favorites yet.
+        <div class="border-b border-black pb-6">
+            <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-[#E31837] mb-2">Saved</p>
+            <h1 class="text-3xl md:text-4xl font-black tracking-tight leading-none">Favorites</h1>
         </div>
-    @else
 
-        <div class="space-y-12">
+        @if($items->isEmpty())
+            <div class="py-24 text-center text-sm text-zinc-500 border border-dashed border-zinc-300">
+                No favorites yet.
+            </div>
+        @else
 
-            @foreach($items as $item)
+            <div class="divide-y divide-black/10">
 
-                @php
-                    $variant = $item->variant ?? null;
-                    $product = $variant?->product;
+                @foreach($items as $item)
 
-                    $color = $variant?->color ?? null;
+                    @php
+                        $variant = $item->variant ?? null;
+                        $product = $variant?->product;
 
-                    $front = $color?->front_image_path;
+                        $color = $variant?->color ?? null;
 
-                    $price = ($variant && $variant->price > 0)
-                        ? $variant->price
-                        : ($product->base_price ?? 0);
-                @endphp
+                        $front = $color?->front_image_path;
 
-                <div class="flex gap-8 border-b border-zinc-100 dark:border-zinc-900 pb-12 group">
+                        $price = ($variant && $variant->price > 0)
+                            ? $variant->price
+                            : ($product->base_price ?? 0);
+                    @endphp
 
-                    {{-- IMAGE --}}
-                    <div class="w-28 aspect-[3/4] bg-zinc-50 dark:bg-zinc-950 border border-black overflow-hidden">
+                    <div class="flex gap-6 py-8 first:pt-0 group">
 
-                        @if($front)
-                            <img src="{{ asset('storage/' . $front) }}"
-                                 class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500">
-                        @endif
+                        {{-- IMAGE --}}
+                        <div class="w-28 aspect-[3/4] bg-zinc-50 border border-black overflow-hidden shrink-0">
+                            @if($front)
+                                <img src="{{ asset('storage/' . $front) }}" class="w-full h-full object-cover">
+                            @endif
+                        </div>
 
-                    </div>
+                        {{-- INFO --}}
+                        <div class="flex-1 space-y-3">
 
-                    {{-- INFO --}}
-                    <div class="flex-1 space-y-2">
-
-                        <div class="flex justify-between items-start">
-
-                            <h4 class="uppercase font-black text-sm tracking-tighter italic">
-                                {{ $product->name ?? 'Unknown Product' }}
-                            </h4>
-
-                            <x-ui.glass class="opacity-0 group-hover:opacity-100 transition">
+                            <div class="flex justify-between items-start">
+                                <p class="font-medium text-sm">{{ $product->name ?? 'Unknown Product' }}</p>
                                 <flux:button
+                                    variant="ghost"
                                     icon="x-mark"
                                     wire:click="remove({{ $item->id }})"
                                     size="xs"
                                 />
-                            </x-ui.glass>
+                            </div>
 
-                        </div>
-
-                        {{-- VARIANT DETAILS --}}
-                        <div class="flex items-center gap-3 text-[9px] uppercase tracking-widest font-black opacity-40 italic">
-
+                            {{-- VARIANT DETAILS --}}
                             @if($variant)
-                                <span>{{ $variant->size }}</span>
-
-                                <span class="opacity-30">/</span>
-
-                                @if($color)
-                                    <div class="flex items-center gap-1.5">
-
-                                        <div class="w-3 h-3 border border-black dark:border-white"
-                                             style="background-color: {{ $color->hex_code }}">
+                                <div class="flex items-center gap-2 text-xs text-zinc-500">
+                                    <span>{{ $variant->size }}</span>
+                                    @if($color)
+                                        <span class="text-zinc-300">/</span>
+                                        <div class="flex items-center gap-1.5">
+                                            <div class="w-3 h-3 border border-black" style="background-color: {{ $color->hex_code }}"></div>
+                                            <span>{{ $color->color_name }}</span>
                                         </div>
-
-                                        <span>{{ $color->color_name }}</span>
-
-                                    </div>
-                                @endif
+                                    @endif
+                                </div>
                             @endif
 
-                        </div>
-
-                        {{-- PRICE --}}
-                        <div class="pt-6 flex justify-between items-end">
-
-                            <span class="text-[10px] uppercase font-black tracking-widest">
-                                Saved Item
-                            </span>
-
-                            <span class="font-mono text-sm font-black italic">
-                                ${{ number_format((float) $price, 2) }}
-                            </span>
+                            <div class="pt-4">
+                                <span class="text-sm font-medium">${{ number_format((float) $price, 2) }}</span>
+                            </div>
 
                         </div>
-
                     </div>
-                </div>
 
-            @endforeach
+                @endforeach
 
-        </div>
+            </div>
 
-    @endif
+        @endif
 
+    </div>
 </div>

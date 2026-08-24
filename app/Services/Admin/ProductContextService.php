@@ -100,46 +100,6 @@ class ProductContextService
 
     /*
     |--------------------------------------------------------------------------
-    | ATTACH COLOR ASSETS (ORCHESTRATION)
-    | (Creates color + syncs front/back images)
-    |--------------------------------------------------------------------------
-    */
-    public function attachColorAssets(
-        int $productId,
-        string $colorName,
-        ?string $hex,
-        ?string $frontPath,
-        ?string $backPath
-    ): ProductColor {
-
-        $color = $this->getOrCreateColor($productId, $colorName, $hex);
-
-        foreach ([
-            'front' => $frontPath,
-            'back'  => $backPath,
-        ] as $side => $path) {
-            if (!$path) continue;
-
-            $this->syncColorMedia($color, $side, $path);
-        }
-
-        return $color;
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | COLOR READINESS CHECK (BUSINESS RULE)
-    | (Used for toggle eligibility / go-live rules)
-    |--------------------------------------------------------------------------
-    */
-    public function isColorReady(ProductColor $color): bool
-    {
-        return !empty($color->front_image_path)
-            && $color->variants()->count() > 0;
-    }
-
-    /*
-    |--------------------------------------------------------------------------
     | VARIANT UPSERT (SIZE / PRICE / STOCK)
     | (Core spec system for product colors)
     |--------------------------------------------------------------------------
@@ -179,36 +139,33 @@ class ProductContextService
 
 
 
-/*
-|--------------------------------------------------------------------------
-| ATTACH UPLOADED COLOR IMAGES
-| (Creates/resolves color and syncs front/back images from uploads)
-|--------------------------------------------------------------------------
-*/
-
-
+    /*
+    |--------------------------------------------------------------------------
+    | ATTACH UPLOADED COLOR IMAGES
+    | (Creates/resolves color and syncs front/back images from uploads)
+    |--------------------------------------------------------------------------
+    */
     public function attachUploadedColorImages(
-    int $productId,
-    string $colorName,
-    ?string $hex,
-    ?string $frontPath,
-    ?string $backPath
-): ProductColor {
+        int $productId,
+        string $colorName,
+        ?string $hex,
+        ?string $frontPath,
+        ?string $backPath
+    ): ProductColor {
 
-    $color = $this->getOrCreateColor($productId, $colorName, $hex);
+        $color = $this->getOrCreateColor($productId, $colorName, $hex);
 
-    foreach ([
-        'front' => $frontPath,
-        'back'  => $backPath,
-    ] as $side => $path) {
-        if (!$path) continue;
+        foreach ([
+            'front' => $frontPath,
+            'back'  => $backPath,
+        ] as $side => $path) {
+            if (!$path) continue;
 
-        $this->syncColorMedia($color, $side, $path);
+            $this->syncColorMedia($color, $side, $path);
+        }
+
+        return $color;
     }
-
-    return $color;
-}
-
 
 
 
@@ -284,10 +241,6 @@ class ProductContextService
         return $color;
     }
 }
-
-
-
-
 
 
 
