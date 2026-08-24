@@ -87,7 +87,7 @@
                 <flux:sidebar.toggle class="mr-2" icon="bars-2" inset="left" />
                 <a href="/" class="group flex items-center gap-1">
        
-                       <x-logo-app class="w-4 h-4" />
+                       <x-logo-app class="w-8 h-8" />
                 </a>
             </div>
             <div class="flex items-center gap-6">
