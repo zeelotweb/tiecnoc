@@ -31,16 +31,17 @@ new class extends Component {
 };
 ?>
 
-<div 
-    wire:click="toggle"
-    class="cursor-pointer group bg-neutral-50 p-2">
+<button
+    type="button"
+    wire:click.stop="toggle"
+    class="relative z-10 flex items-center justify-center cursor-pointer bg-neutral-50 p-2">
 
-    <flux:icon.heart 
+    <flux:icon.heart
        variant="{{ $active ? 'solid' : 'outline' }}"
-        class="w-5 h-5 transition-all duration-300 
-        {{ $active 
-            ? 'text-green-600 scale-110' 
-            : 'text-black opacity-50 group-hover:opacity-100' }}" 
+        class="w-5 h-5 transition-all duration-300
+        {{ $active
+            ? 'text-green-600 scale-110'
+            : 'text-black opacity-70 hover:opacity-100' }}"
     />
 
-</div>
+</button>

@@ -155,7 +155,7 @@ new class extends Component {
                             @endif
 
                             @if($variant)
-                                <div class="absolute top-2 right-2 bg-white/80 backdrop-blur p-1">
+                                <div class="absolute top-2 right-2 z-10 bg-white/80 backdrop-blur p-1">
                                     <livewire:platform.reaction_button :variantId="$variant->id" type="favorite" :key="'home-reaction-'.$variant->id" />
                                 </div>
                             @endif
