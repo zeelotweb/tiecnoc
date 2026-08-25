@@ -11,10 +11,6 @@ new class extends Component {
         $this->orderNumber = $orderNumber;
     }
 
-    /**
-     * TNC / AUTHORITY: NATIVE ORDER DATA
-     * Computed property ensures the items are eager-loaded for the manifest grid.
-     */
     public function getOrderProperty()
     {
         return Order::with('items')
@@ -23,95 +19,71 @@ new class extends Component {
     }
 }; ?>
 
-<div class="p-0 bg-white dark:bg-black text-black dark:text-white border border-black dark:border-white overflow-hidden">
+<div class="bg-white text-black overflow-hidden">
     @if($this->order)
-        <header class="p-8 border-b border-black dark:border-white bg-zinc-50 dark:bg-zinc-900">
+        <header class="p-6 border-b border-black">
             <div class="flex justify-between items-start">
                 <div>
-                    <flux:heading size="xl" class="uppercase font-black italic tracking-tighter">Digital Manifest</flux:heading>
-                    <p class="text-[9px] uppercase tracking-[0.4em] font-black opacity-40 italic mt-1">Verified Platform Record</p>
+                    <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-[#E31837] mb-1">Order</p>
+                    <h2 class="text-xl font-black tracking-tight">{{ $this->order->order_number }}</h2>
                 </div>
-                
-                {{-- PDF EXPORT TRIGGER --}}
-                <flux:button 
-                    href="{{ route('order.manifest.download', $this->order->order_number) }}" 
-                    variant="subtle" 
-                    icon="document-arrow-down" 
-                    class="uppercase font-black text-[8px] border border-black dark:border-white rounded-none h-10 px-4"
-                >
-                    Export PDF
-                </flux:button>
+
+                <a href="{{ route('order.manifest.download', $this->order->order_number) }}"
+                   class="h-9 px-3 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest border border-black hover:bg-black hover:text-white transition-colors">
+                    <flux:icon.document-arrow-down class="w-4 h-4" />
+                    PDF
+                </a>
             </div>
 
-            <div class="flex justify-between items-end mt-8">
+            <div class="flex justify-between items-end mt-6">
                 <div>
-                    <p class="text-[8px] uppercase font-black opacity-30 tracking-widest">Status Flag</p>
-                    <p @class([
-                        'text-[10px] uppercase font-black px-2 py-0.5 border inline-block mt-1',
-                        'bg-green-500 text-white border-green-500' => $this->order->status === 'paid',
-                        'bg-zinc-100 text-black border-black opacity-40' => $this->order->status === 'pending',
-                        'bg-red-500 text-white border-red-500' => in_array($this->order->status, ['refunded', 'void']),
-                    ])>{{ $this->order->status }}</p>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-1">Status</p>
+                    <flux:badge size="sm" :color="match($this->order->status) {
+                        'paid' => 'emerald',
+                        'pending' => 'amber',
+                        'refunded', 'void' => 'red',
+                        default => 'zinc',
+                    }">{{ ucfirst($this->order->status) }}</flux:badge>
                 </div>
                 <div class="text-right">
-                    <p class="text-[8px] uppercase font-black opacity-30 tracking-widest">Identity ID</p>
-                    <p class="text-[11px] uppercase font-black font-mono tracking-tighter">{{ $this->order->order_number }}</p>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-1">Date</p>
+                    <p class="text-sm">{{ $this->order->created_at->format('M j, Y') }}</p>
                 </div>
             </div>
         </header>
 
-        <div class="p-8 space-y-6 max-h-[50vh] overflow-y-auto">
-            {{-- Loop through native items --}}
+        <div class="p-6 space-y-6 max-h-[50vh] overflow-y-auto">
             @forelse($this->order->items as $item)
-                <div class="flex gap-6 items-center group border-b border-zinc-100 dark:border-zinc-900 pb-6 last:border-0 last:pb-0">
-                    {{-- Visual Snapshot --}}
-                    <div class="w-20 h-20 bg-zinc-100 dark:bg-zinc-900 border border-black overflow-hidden flex-shrink-0">
+                <div class="flex gap-4 items-center border-b border-zinc-100 pb-6 last:border-0 last:pb-0">
+                    <div class="w-16 h-16 bg-zinc-50 border border-black overflow-hidden shrink-0">
                         @if($item->image)
-                            <img src="{{ Storage::url($item->image) }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                            <img src="{{ Storage::url($item->image) }}" class="w-full h-full object-cover">
                         @else
-                            <div class="w-full h-full flex items-center justify-center opacity-10">
-                                <flux:icon.photo class="w-8 h-8" />
+                            <div class="w-full h-full flex items-center justify-center text-zinc-300">
+                                <flux:icon.photo class="w-6 h-6" />
                             </div>
                         @endif
                     </div>
 
                     <div class="flex-1 min-w-0">
-                        <p class="text-[11px] uppercase font-black tracking-widest truncate">{{ $item->name }}</p>
-                        <p class="text-[9px] font-mono opacity-50 uppercase mt-1">{{ $item->sku }} // {{ $item->attr }}</p>
-                        <p class="text-[8px] uppercase font-black tracking-widest mt-2 px-2 py-0.5 bg-zinc-100 dark:bg-zinc-800 inline-block">Units: {{ $item->qty }}</p>
+                        <p class="text-sm font-medium truncate">{{ $item->name }}</p>
+                        <p class="text-xs text-zinc-500 mt-0.5">{{ $item->attr }} &middot; Qty {{ $item->qty }}</p>
                     </div>
 
-                    <div class="text-right">
-                        <p class="text-sm font-black italic tracking-tighter">${{ number_format((float)$item->price, 2) }}</p>
-                        <p class="text-[7px] opacity-30 uppercase font-black tracking-widest mt-1">Item Valuation</p>
-                    </div>
+                    <span class="text-sm font-medium">${{ number_format((float) $item->price, 2) }}</span>
                 </div>
             @empty
-                <div class="py-20 text-center opacity-30 uppercase text-[10px] font-black italic tracking-[0.5em]">
-                    Manifest Items Null / Data Sync Failure
-                </div>
+                <p class="py-12 text-center text-sm text-zinc-500">No items found for this order.</p>
             @endforelse
         </div>
 
-        <footer class="p-8 border-t border-black dark:border-white bg-zinc-50 dark:bg-zinc-900 flex justify-between items-end">
-            <div class="space-y-1">
-                <div class="opacity-20 uppercase font-black text-[7px] tracking-[0.4em]">
-                    Digital Record Authority
-                </div>
-                <div class="text-[8px] font-mono opacity-40 uppercase">
-                    TS: {{ $this->order->created_at->format('Y.m.d.H.i.s') }}
-                </div>
-            </div>
-            
-            <div class="text-right">
-                <p class="text-[8px] uppercase font-black opacity-30 tracking-widest">Aggregate Total</p>
-                <p class="text-4xl font-black italic tracking-tighter leading-none mt-1">${{ number_format((float)$this->order->total_amount, 2) }}</p>
-            </div>
+        <footer class="p-6 border-t border-black flex justify-between items-center">
+            <span class="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Total</span>
+            <span class="text-2xl font-black tracking-tight">${{ number_format((float) $this->order->total_amount, 2) }}</span>
         </footer>
     @else
-        <div class="p-32 text-center flex flex-col items-center justify-center space-y-4">
-            <flux:icon.document-magnifying-glass class="w-12 h-12 opacity-10" />
-            <p class="uppercase font-black opacity-20 text-[10px] tracking-[0.5em]">Manifest Context Not Resolved</p>
+        <div class="p-16 text-center text-sm text-zinc-500">
+            Order not found.
         </div>
     @endif
 </div>

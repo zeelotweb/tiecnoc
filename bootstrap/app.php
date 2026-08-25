@@ -13,13 +13,15 @@ return Application::configure(basePath: dirname(__DIR__))
     )
 ->withMiddleware(function (Middleware $middleware): void {
     // Register your Admin Alias
-    $middleware->alias([ 
-        'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,  
-        
+    $middleware->alias([
+        'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
+
     ]);
 
-
-
+    // Stripe (and any external webhook) can't supply a CSRF token.
+    $middleware->validateCsrfTokens(except: [
+        'webhooks/stripe',
+    ]);
 })
 
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -28,39 +28,32 @@ new class extends Component {
     }
 }; ?>
 
-<div class="min-h-[60vh] flex items-center justify-center bg-white dark:bg-black p-8">
-    <div class="max-w-md w-full border-2 border-black dark:border-white p-12 text-center space-y-8 animate-in fade-in zoom-in duration-700">
-        <header class="space-y-2">
-            <flux:heading size="xl" class="uppercase font-black italic tracking-tighter">Transaction Verified</flux:heading>
-            <p class="text-[10px] uppercase tracking-[0.3em] opacity-40 font-black">Native Activity Recorded</p>
-        </header>
+<div class="bg-white text-black min-h-screen flex items-center justify-center px-4">
+    <div class="max-w-md w-full border border-black p-10 text-center space-y-8">
+        <div>
+            <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-[#E31837] mb-2">Confirmed</p>
+            <h1 class="text-2xl font-black tracking-tight">Payment Successful</h1>
+        </div>
 
-        <div class="py-8 border-y border-black/10 dark:border-white/10 space-y-2">
-            <p class="text-[8px] uppercase font-black opacity-30 tracking-widest">Manifest ID</p>
-            <p class="font-mono text-lg font-bold">{{ $orderNumber ?? 'TNC-UNKNOWN' }}</p>
+        <div class="py-6 border-y border-black space-y-1">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Order Number</p>
+            <p class="font-mono text-lg font-medium">{{ $orderNumber ?? 'Unavailable' }}</p>
         </div>
 
         <div class="flex flex-col gap-3">
-            {{-- This would link to your Finance/Ledger or a dedicated User Receipt page --}}
-               {{-- MODAL TRIGGER --}}
             <flux:modal.trigger name="view-manifest">
-                <flux:button variant="filled" class="w-full bg-black text-white dark:bg-white dark:text-black rounded-none uppercase font-black italic tracking-tighter h-14">
-                    View Digital Manifest
-                </flux:button>
+                <button type="button" class="w-full h-12 text-[11px] font-bold uppercase tracking-[0.2em] bg-black text-white hover:bg-[#E31837] transition-colors">
+                    View Order Details
+                </button>
             </flux:modal.trigger>
 
-            <flux:button href="{{ route('store.all') }}" variant="subtle" class="uppercase font-black text-[9px] tracking-widest opacity-50 hover:opacity-100 transition-opacity">
-                Return to Catalogue
-            </flux:button>
+            <a href="{{ route('store.all') }}" wire:navigate class="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500 hover:text-black transition-colors">
+                Continue Shopping
+            </a>
         </div>
-
-        <footer class="pt-4">
-            <p class="text-[7px] uppercase tracking-[0.5em] font-black opacity-20 italic">Surgically Optimized Fulfillment in Progress</p>
-        </footer>
     </div>
 
-        {{-- THE MANIFEST MODAL --}}
-    <flux:modal name="view-manifest" class="p-0 border-2 border-black dark:border-white rounded-none max-w-lg">
+    <flux:modal name="view-manifest" class="p-0 max-w-lg">
         @if($orderNumber)
             @livewire('store.order-manifest', ['orderNumber' => $orderNumber])
         @endif
