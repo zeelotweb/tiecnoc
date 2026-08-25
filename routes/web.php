@@ -8,6 +8,7 @@ use App\Http\Controllers\ChunkUploadController;
 
 use App\Http\Controllers\Pay\CheckoutController;
 use App\Http\Controllers\Pay\StripeWebhookController;
+use App\Http\Controllers\Auth\GoogleAuthController;
 use Laravel\Cashier\Cashier;
 
 
@@ -20,6 +21,9 @@ use Laravel\Cashier\Cashier;
 |--------------------------------------------------------------------------
 */
 Route::view('/', 'dashboard')->name('home');
+
+Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect'])->name('auth.google.redirect');
+Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('auth.google.callback');
 
 // Moved outside so anyone can view the merch
 Route::get('/merch/{id}', [PlatformController::class, 'displaymerch'])
