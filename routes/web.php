@@ -8,7 +8,6 @@ use App\Http\Controllers\ChunkUploadController;
 
 use App\Http\Controllers\Pay\CheckoutController;
 use App\Http\Controllers\Pay\StripeWebhookController;
-use App\Http\Middleware\EnsureUserIsAdmin;
 use Laravel\Cashier\Cashier;
 
 
@@ -104,7 +103,7 @@ Route::post('/checkout', CheckoutController::class)->name('checkout');
 Route::get('/checkout/success', function (Request $request) {
     $session = Cashier::stripe()->checkout->sessions->retrieve($request->get('session_id'));
     return view('checkout.success', [
-        'customer' => $session->customer_details->name ?? 'Guest',
+        'orderId' => $session->metadata->order_id ?? null,
     ]);
 })->name('checkout.success');
 

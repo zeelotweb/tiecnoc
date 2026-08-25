@@ -7,24 +7,36 @@ use App\Models\Order;
 new class extends Component {
     public $orderNumber;
 
-    public function mount(CartService $cart)
+    // $orderId comes from the Stripe session's metadata (see checkout.success
+    // route) — this is the exact order this confirmation page is for, not a
+    // guess. Falling back to "latest paid order" only covers old links that
+    // predate this.
+    public function mount(CartService $cart, $orderId = null)
     {
-        // 1. Identify the most recent paid order for this user to show the receipt
-        $order = Order::where('user_id', auth()->id())
-                      ->where('status', 'paid')
-                      ->latest()
-                      ->first();
+        $order = $orderId ? Order::find($orderId) : null;
 
-        $this->orderNumber = $order ? $order->order_number : null;
+        if (!$order) {
+            $order = Order::where('user_id', auth()->id())
+                          ->where('status', 'paid')
+                          ->latest()
+                          ->first();
+        }
 
-        // 2. Wipe the local session cart
-        $cart->clear();
+        $this->orderNumber = $order?->order_number;
 
-        // 3. Dispatch the global reset signal to the Nav Bag
+        // Only clear the active cart if it's a DIFFERENT order than the one
+        // we're confirming. Stripe's redirect to this page can arrive before
+        // the webhook that marks the order 'paid' — until that happens, this
+        // order still looks like "the active pending cart", and blindly
+        // calling clear() would delete the order we just charged the
+        // customer for, with no record left.
+        $activeCart = $cart->getActiveOrder();
+        if ($activeCart && (!$order || $activeCart->id !== $order->id)) {
+            $cart->clear();
+        }
+
         $this->dispatch('cart-updated');
-        
-        // 4. Send UI notification
-        $this->dispatch('notify', message: 'ARCHIVE SECURED / SELECTION CLEARED', type: 'success');
+        $this->dispatch('notify', message: 'ORDER CONFIRMED', type: 'success');
     }
 }; ?>
 

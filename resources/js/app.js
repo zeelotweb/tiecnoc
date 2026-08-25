@@ -47,13 +47,6 @@ window.openFluxModal = function (name) {
 
 
 
-    document.addEventListener('alpine:init', () => {
-        window.addEventListener('toggle-theme', () => {
-            let theme = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
-            document.documentElement.classList.toggle('dark');
-            localStorage.setItem('theme', theme);
-        });
-    });
 
 
 
