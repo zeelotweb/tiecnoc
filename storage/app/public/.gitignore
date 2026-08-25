@@ -1,10 +1,2 @@
 *
 !.gitignore
-
-# Brand logo files — small, fixed assets, versioned like code rather than
-# treated as runtime/uploaded content (unlike product photos).
-!icons/
-icons/*
-!icons/tiecnoc.jpeg
-!icons/mark-black.png
-!icons/mark-white.png
